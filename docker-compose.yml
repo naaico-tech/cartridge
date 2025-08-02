@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: cartridge_postgres
+    environment:
+      POSTGRES_DB: cartridge
+      POSTGRES_USER: cartridge
+      POSTGRES_PASSWORD: cartridge
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cartridge -d cartridge"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and task queue
+  redis:
+    image: redis:7-alpine
+    container_name: cartridge_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Cartridge Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: cartridge_backend
+    environment:
+      - CARTRIDGE_DB_URL=postgresql://cartridge:cartridge@postgres:5432/cartridge
+      - CARTRIDGE_REDIS_URL=redis://redis:6379/0
+      - CARTRIDGE_ENVIRONMENT=development
+      - CARTRIDGE_DEBUG=true
+      - CARTRIDGE_LOG_LEVEL=DEBUG
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/src:/app/src
+      - ./uploads:/app/uploads
+      - ./output:/app/output
+      - ./temp:/app/temp
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Celery worker for background tasks
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: cartridge_celery_worker
+    command: celery -A cartridge.tasks.celery_app worker --loglevel=info --queues=scan,generation,test
+    environment:
+      - CARTRIDGE_DB_URL=postgresql://cartridge:cartridge@postgres:5432/cartridge
+      - CARTRIDGE_REDIS_URL=redis://redis:6379/0
+      - CARTRIDGE_ENVIRONMENT=development
+      - CARTRIDGE_DEBUG=true
+      - CARTRIDGE_LOG_LEVEL=DEBUG
+    volumes:
+      - ./backend/src:/app/src
+      - ./uploads:/app/uploads
+      - ./output:/app/output
+      - ./temp:/app/temp
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Celery beat for scheduled tasks
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: cartridge_celery_beat
+    command: celery -A cartridge.tasks.celery_app beat --loglevel=info
+    environment:
+      - CARTRIDGE_DB_URL=postgresql://cartridge:cartridge@postgres:5432/cartridge
+      - CARTRIDGE_REDIS_URL=redis://redis:6379/0
+      - CARTRIDGE_ENVIRONMENT=development
+      - CARTRIDGE_DEBUG=true
+      - CARTRIDGE_LOG_LEVEL=DEBUG
+    volumes:
+      - ./backend/src:/app/src
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Flower for monitoring Celery tasks
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: cartridge_flower
+    command: celery -A cartridge.tasks.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      - CARTRIDGE_REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # Frontend (React) - will be added in next phase
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: cartridge_frontend
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./frontend/src:/app/src
+  #   depends_on:
+  #     - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: cartridge_network
