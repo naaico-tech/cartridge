@@ -1,0 +1,5 @@
+---
+description: Always run unit tests before completing complete todo list to check validity of all tasks completed
+globs:
+alwaysApply: true
+---

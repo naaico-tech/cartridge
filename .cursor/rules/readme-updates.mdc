@@ -1,0 +1,5 @@
+---
+description: Always update the readme file.
+globs:
+alwaysApply: false
+---

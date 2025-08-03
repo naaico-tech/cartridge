@@ -1,0 +1,5 @@
+---
+description: create a venv whenever starting development. If it does exist, activate it and put it to use in development
+globs:
+alwaysApply: true
+---
