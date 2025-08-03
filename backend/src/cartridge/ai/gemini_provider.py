@@ -27,7 +27,7 @@ class GeminiProvider(AIProvider):
         # Configure Gemini
         genai.configure(api_key=api_key)
         
-        self.model_name = config.get("model", "gemini-1.5-pro")
+        self.model_name = config.get("model", "gemini-2.5-flash")
         self.temperature = config.get("temperature", 0.1)
         self.max_tokens = config.get("max_tokens", 4000)
         

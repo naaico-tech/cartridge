@@ -28,6 +28,11 @@ class AIProviderFactory:
         "gemini-pro": GeminiProvider,
         "gemini-1.5-pro": GeminiProvider,
         "gemini-1.5-flash": GeminiProvider,
+        "gemini-2.5-flash": GeminiProvider,
+        "gemini-2.5-pro": GeminiProvider,
+        "gemini-2.5-pro-exp": GeminiProvider,
+        "gemini-2.5-pro-exp-08-01": GeminiProvider,
+        "gemini-2.5-pro-exp-08-01": GeminiProvider,
     }
     
     @classmethod

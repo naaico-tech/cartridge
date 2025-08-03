@@ -275,19 +275,19 @@ class DatabaseConnector(ABC):
             
             # Get tables to scan
             if tables is None:
-                tables = await self.get_tables(db_info.schema_name)
+                tables = await self.get_tables(schema=db_info.schema_name)
             
             # Scan each table
             table_infos = []
             for table_name in tables:
                 try:
                     self.logger.info(f"Scanning table: {table_name}")
-                    table_info = await self.get_table_info(table_name, db_info.schema_name)
+                    table_info = await self.get_table_info(table_name, schema=db_info.schema_name)
                     
                     # Get sample data if requested
                     if include_sample_data:
                         try:
-                            sample_data = await self.get_sample_data(table_name, db_info.schema_name, sample_size)
+                            sample_data = await self.get_sample_data(table_name, schema=db_info.schema_name, limit=sample_size)
                             table_info.sample_data = sample_data
                         except Exception as e:
                             self.logger.warning(f"Failed to get sample data for {table_name}: {e}")

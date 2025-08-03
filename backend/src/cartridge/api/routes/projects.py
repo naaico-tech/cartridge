@@ -125,12 +125,24 @@ def _convert_schema_data_to_tables(schema_data: Dict[str, Any]) -> List[TableMap
 
 def _convert_ai_model_to_api(ai_model) -> GeneratedModel:
     """Convert AI provider GeneratedModel to API GeneratedModel."""
+    # Convert tests to dict format
+    tests = []
+    if ai_model.tests:
+        for test in ai_model.tests:
+            if hasattr(test, 'to_dict'):
+                tests.append(test.to_dict())
+            elif hasattr(test, '__dict__'):
+                tests.append(test.__dict__)
+            else:
+                # If it's already a dict or simple value
+                tests.append(test)
+    
     return GeneratedModel(
         name=ai_model.name,
         type=ai_model.model_type.value,
         sql=ai_model.sql,
         description=ai_model.description or "",
-        tests=[test.to_dict() for test in ai_model.tests] if ai_model.tests else [],
+        tests=tests,
         dependencies=ai_model.dependencies or [],
     )
 
