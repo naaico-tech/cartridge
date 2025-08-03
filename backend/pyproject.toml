@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "AI-powered dbt model generator that scans data sources and creates optimized dbt models"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "Cartridge Team", email = "team@cartridge.dev"},
 ]
@@ -16,7 +16,7 @@ keywords = ["dbt", "data-modeling", "ai", "sql", "analytics"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -37,6 +37,7 @@ dependencies = [
     "alembic>=1.13.0",
     "asyncpg>=0.29.0",  # PostgreSQL async driver
     "psycopg2-binary>=2.9.0",  # PostgreSQL sync driver
+    "greenlet>=3.0.0",  # Required for SQLAlchemy async
     
     # Database connectors
     "pymysql>=1.1.0",  # MySQL
@@ -53,7 +54,7 @@ dependencies = [
     "tiktoken>=0.5.0",
     
     # Data processing
-    "pandas>=2.1.0",
+    "pandas>=1.5.0,<2.1.0",
     "numpy>=1.24.0",
     "sqlparse>=0.4.0",
     
@@ -71,7 +72,6 @@ dependencies = [
     # File handling and compression
     "jinja2>=3.1.0",
     "pyyaml>=6.0",
-    "tarfile-stream>=0.1.0",
     
     # Utilities
     "click>=8.1.0",
@@ -121,6 +121,7 @@ cartridge = "cartridge.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["cartridge*"]
 
 [tool.setuptools.package-dir]
 "" = "src"

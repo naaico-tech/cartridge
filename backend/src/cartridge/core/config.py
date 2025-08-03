@@ -131,6 +131,7 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
+        extra = "ignore"
     
     def create_directories(self) -> None:
         """Create necessary directories if they don't exist."""

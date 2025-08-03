@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     git \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Create and activate virtual environment
@@ -17,7 +18,7 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy requirements and install Python dependencies
-COPY pyproject.toml /tmp/
+COPY . /tmp/
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install /tmp/
 
@@ -32,6 +33,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     libpq5 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy virtual environment from builder stage
@@ -72,6 +74,10 @@ FROM production as development
 
 # Switch back to root for development tools
 USER root
+
+# Copy project files for development installation
+COPY pyproject.toml README.md /app/
+COPY src/ /app/src/
 
 # Install development dependencies
 RUN pip install -e ".[dev,test,docs]"
