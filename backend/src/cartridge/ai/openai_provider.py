@@ -102,6 +102,22 @@ class OpenAIProvider(AIProvider):
                                 error_msg = f"Failed to generate dimension model for {dim_table}: {str(e)}"
                                 self.logger.error(error_msg)
                                 errors.append(error_msg)
+                
+                # If no explicit fact/dimension tables, generate some mart models anyway
+                if not request.fact_tables and not request.dimension_tables and request.tables:
+                    # Generate at least one mart model from the first few tables
+                    for table in request.tables[:2]:  # Limit to avoid too many models
+                        try:
+                            mart_model = await self.generate_mart_model(
+                                [f"stg_{table.name}"],
+                                f"Business mart model for {table.name}",
+                                table
+                            )
+                            models.append(mart_model)
+                        except Exception as e:
+                            error_msg = f"Failed to generate mart model for {table.name}: {str(e)}"
+                            self.logger.error(error_msg)
+                            errors.append(error_msg)
             
             # Generate project structure
             project_structure = self._generate_project_structure(models)

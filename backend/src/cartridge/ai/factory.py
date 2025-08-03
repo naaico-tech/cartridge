@@ -99,18 +99,39 @@ class MockAIProvider(AIProvider):
                 models.append(model)
         
         # Generate mock mart models
-        if ModelType.MARTS in request.model_types and request.fact_tables:
-            for fact_table in request.fact_tables[:2]:
+        if ModelType.MARTS in request.model_types:
+            # Create some example mart models based on the first few tables
+            table_names = [table.name for table in request.tables[:3]]
+            
+            # Generate a fact model (assuming orders or similar)
+            if any('order' in name.lower() for name in table_names):
+                order_table = next((name for name in table_names if 'order' in name.lower()), table_names[0])
                 model = GeneratedModel(
-                    name=f"fct_{fact_table}",
+                    name=f"fct_{order_table}",
                     model_type=ModelType.MARTS,
-                    sql=f"select * from {{{{ ref('stg_{fact_table}') }}}}",
-                    description=f"Mock fact model for {fact_table}",
+                    sql=f"select * from {{{{ ref('stg_{order_table}') }}}}",
+                    description=f"Mock fact model for {order_table}",
                     columns=[],
                     tests=[],
-                    dependencies=[f"stg_{fact_table}"],
+                    dependencies=[f"stg_{order_table}"],
                     materialization="table",
                     tags=["marts", "fact", "mock"]
+                )
+                models.append(model)
+            
+            # Generate a dimension model
+            if len(table_names) > 1:
+                dim_table = table_names[1]
+                model = GeneratedModel(
+                    name=f"dim_{dim_table}",
+                    model_type=ModelType.MARTS,
+                    sql=f"select * from {{{{ ref('stg_{dim_table}') }}}}",
+                    description=f"Mock dimension model for {dim_table}",
+                    columns=[],
+                    tests=[],
+                    dependencies=[f"stg_{dim_table}"],
+                    materialization="table",
+                    tags=["marts", "dimension", "mock"]
                 )
                 models.append(model)
         

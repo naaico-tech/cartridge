@@ -312,13 +312,31 @@ def generate(scan_file: str, ai_model: str, output: Optional[str], project_name:
             click.echo("🧠 Generating dbt models with AI...")
             from cartridge.ai.base import ModelGenerationRequest, ModelType
             
+            # Identify fact and dimension tables for better mart generation
+            fact_tables = []
+            dimension_tables = []
+            
+            for table in tables:
+                table_name_lower = table.name.lower()
+                # Heuristics to identify fact tables (transaction/event tables)
+                if any(keyword in table_name_lower for keyword in ['order', 'transaction', 'sale', 'event', 'log', 'fact']):
+                    fact_tables.append(table.name)
+                # Heuristics to identify dimension tables (lookup/reference tables)
+                elif any(keyword in table_name_lower for keyword in ['user', 'customer', 'product', 'category', 'location', 'dim']):
+                    dimension_tables.append(table.name)
+                # If not clearly identifiable, add to dimensions (safer default)
+                else:
+                    dimension_tables.append(table.name)
+            
             request = ModelGenerationRequest(
                 tables=tables,
                 model_types=[ModelType.STAGING, ModelType.MARTS],
                 business_context=business_context or f"Generated dbt models for {scan_data.get('database_type', 'unknown')} database",
                 include_tests=True,
                 include_documentation=True,
-                target_warehouse=scan_data.get("database_type", "postgresql")
+                target_warehouse=scan_data.get("database_type", "postgresql"),
+                fact_tables=fact_tables if fact_tables else None,
+                dimension_tables=dimension_tables if dimension_tables else None
             )
             
             generation_result = await ai_provider_instance.generate_models(request)
