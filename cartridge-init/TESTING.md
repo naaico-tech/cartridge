@@ -1,10 +1,10 @@
-# Testing Guide for Cartridge Backend
+# Testing Guide for Cartridge Init
 
-This document provides comprehensive information about testing the Cartridge backend application.
+This document provides comprehensive information about testing the Cartridge Init application.
 
 ## 🧪 Test Suite Overview
 
-Our test suite is designed to ensure reliability, performance, and correctness of the Cartridge backend. It includes:
+Our test suite is designed to ensure reliability, performance, and correctness of the `cartridge-init` service. It includes:
 
 - **Unit Tests**: Test individual components in isolation
 - **Integration Tests**: Test complete workflows and component interactions
@@ -14,7 +14,7 @@ Our test suite is designed to ensure reliability, performance, and correctness o
 ## 📁 Test Structure
 
 ```
-backend/tests/
+cartridge-init/tests/
 ├── conftest.py              # Pytest configuration and fixtures
 ├── pytest.ini              # Pytest settings and markers
 ├── test_database_setup.py   # Database setup and migration tests

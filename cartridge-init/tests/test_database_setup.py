@@ -5,6 +5,8 @@ import asyncio
 from sqlalchemy import text
 from alembic.config import Config
 from alembic import command
+import importlib.util
+from pathlib import Path
 
 from cartridge.core.database import async_engine, Base
 from cartridge.models import User, Project, DataSource, ScanResult
@@ -111,10 +113,15 @@ class TestAlembicMigrations:
     
     def test_alembic_config(self):
         """Test Alembic configuration."""
-        from backend.alembic.env import get_url
-        
+        # Dynamically load Alembic env from the project directory
+        env_path = Path(__file__).resolve().parents[1].parent / "alembic" / "env.py"
+        spec = importlib.util.spec_from_file_location("project_alembic_env", str(env_path))
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)  # type: ignore[attr-defined]
+
         # Test that we can get database URL
-        url = get_url()
+        url = module.get_url()
         assert "postgresql" in url
     
     @pytest.mark.slow
@@ -123,7 +130,9 @@ class TestAlembicMigrations:
         # This would test actual migration files when they exist
         # For now, we'll just test that the migration system is configured
         
-        config = Config("backend/alembic.ini")
+        # Resolve path to alembic.ini relative to this test file
+        config_path = Path(__file__).resolve().parents[1] / "alembic.ini"
+        config = Config(str(config_path))
         
         # Test that we can get the migration directory
         script_location = config.get_main_option("script_location")

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Test runner script for Cartridge backend
+# Test runner script for Cartridge Init
 # This script provides various test running options with proper setup
 
 set -e  # Exit on any error
@@ -210,7 +210,7 @@ main() {
     # Trap cleanup on exit
     trap cleanup EXIT
     
-    print_status "Starting Cartridge backend test runner..."
+    print_status "Starting Cartridge Init test runner..."
     
     # Setup test environment unless skipped
     if [[ "$skip_setup" != "--skip-setup" ]]; then

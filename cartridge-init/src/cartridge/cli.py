@@ -11,9 +11,12 @@ from urllib.parse import urlparse
 import click
 import uvicorn
 
+# Set CLI mode before importing other modules to suppress factory logs
+os.environ['CARTRIDGE_CLI_MODE'] = '1'
+
 from cartridge.core.config import settings
 from cartridge.core.database import init_db, drop_tables
-from cartridge.core.logging import get_logger
+from cartridge.core.logging import get_logger, setup_logging
 from cartridge.scanner.factory import ConnectorFactory
 from cartridge.ai.factory import AIProviderFactory
 from cartridge.dbt.project_generator import DBTProjectGenerator
@@ -23,9 +26,15 @@ logger = get_logger(__name__)
 
 @click.group()
 @click.version_option(version=settings.app.version)
-def main():
+@click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
+def main(verbose):
     """Cartridge - AI-powered dbt model generator."""
-    pass
+    # Set verbose environment variable if requested
+    if verbose:
+        os.environ['CARTRIDGE_VERBOSE'] = '1'
+    
+    # Set up CLI-specific logging (quiet by default, unless --verbose)
+    setup_logging(cli_mode=not verbose)
 
 
 @main.command()

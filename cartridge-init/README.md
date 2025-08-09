@@ -1,4 +1,4 @@
-# Cartridge Backend 🚀
+# Cartridge Init 🚀
 
 **AI-powered dbt model generator - Complete Backend Implementation**
 
@@ -31,11 +31,13 @@ FastAPI-based backend service that handles database schema scanning, AI-powered 
 
 ## 🚀 Quick Start
 
+This folder was previously named `backend`. It has been renamed to `cartridge-init` to reflect its purpose as the initialization service.
+
 ### Option 1: CLI Usage (Recommended for Development)
 
 ```bash
 # 1. Setup
-cd backend
+cd cartridge-init
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -e ".[dev,test]"
@@ -68,8 +70,8 @@ dbt run
 ### Option 2: Full Docker Setup
 
 ```bash
-# From the backend directory
-cd backend
+# From the cartridge-init directory
+cd cartridge-init
 cp env.local.example .env
 # Edit .env with your API keys
 docker-compose up -d
@@ -78,7 +80,7 @@ docker-compose up -d
 ### Option 3: API Service
 
 ```bash
-cd backend
+cd cartridge-init
 source venv/bin/activate
 cartridge serve --reload
 ```
@@ -96,7 +98,7 @@ Visit http://localhost:8000/docs for interactive API documentation.
 
 ```bash
 # Clone and setup
-cd backend
+cd cartridge-init
 python -m venv venv
 source venv/bin/activate
 
@@ -239,7 +241,7 @@ cartridge generate scan_results.json \
 
 ## 📊 Sample E-commerce Database
 
-The backend includes a comprehensive e-commerce sample database with:
+This service includes a comprehensive e-commerce sample database with:
 
 - **13 Tables**: Users, products, orders, reviews, analytics, etc.
 - **Realistic Data**: 1000+ sample records with relationships
@@ -260,7 +262,7 @@ The backend includes a comprehensive e-commerce sample database with:
 ## 🏗️ Project Structure
 
 ```
-backend/
+cartridge-init/
 ├── src/cartridge/           # Main application code
 │   ├── api/                 # FastAPI routes and middleware
 │   │   ├── main.py         # FastAPI app initialization
@@ -583,4 +585,4 @@ cartridge scan --verbose postgresql://...
 - Comprehensive API documentation
 
 **🚀 Ready to Use:**
-Your Cartridge backend is fully implemented and ready for production use! Start by scanning your database and generating your first AI-powered dbt project.
+Your Cartridge Init service is fully implemented and ready for production use! Start by scanning your database and generating your first AI-powered dbt project.

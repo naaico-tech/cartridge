@@ -25,7 +25,7 @@ Cartridge automatically analyzes your database schemas, uses AI to infer optimal
    cd cartridge
    cp env.example .env
    # Edit .env with your configuration
-   docker-compose up -d
+    docker-compose up -d
    ```
 
 2. **Access the application:**
@@ -150,7 +150,7 @@ curl -X GET "http://localhost:8000/api/v1/projects/proj_123456/download" \
 ## Project Structure
 
 ```
-cartridge/
+cartridge-init/
 ├── src/cartridge/
 │   ├── api/                 # FastAPI application
 │   │   ├── routes/          # API endpoints
@@ -167,9 +167,9 @@ cartridge/
 │   └── cli.py               # Command line interface
 ├── tests/                   # Test suite
 ├── docs/                    # Documentation
-├── docker-compose.yml       # Docker services
-├── Dockerfile               # Container definition
-└── pyproject.toml          # Python project configuration
+├── docker-compose.yml       # Docker services (at repo root)
+├── Dockerfile               # Container definition (inside `cartridge-init`)
+└── pyproject.toml          # Python project configuration (inside `cartridge-init`)
 ```
 
 ## Configuration
@@ -232,11 +232,11 @@ See our [Development Plan](docs/development-plan.md) for detailed milestones.
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details. Please fork the repo, create a branch, and open a PR referencing any related issue.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — you can copy, modify, and redistribute with attribution. See the [LICENSE](LICENSE) file.
 
 ## Support
 

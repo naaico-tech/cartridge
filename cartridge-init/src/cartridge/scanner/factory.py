@@ -39,7 +39,10 @@ class ConnectorFactory:
     def register_connector(cls, database_type: str, connector_class: type) -> None:
         """Register a new connector type."""
         cls._connectors[database_type.lower()] = connector_class
-        logger.info(f"Registered connector for {database_type}")
+        # Only log registration if not in CLI mode or if verbose is enabled
+        import os
+        if not os.environ.get('CARTRIDGE_CLI_MODE') or os.environ.get('CARTRIDGE_VERBOSE'):
+            logger.info(f"Registered connector for {database_type}")
 
 
 # Placeholder connectors for other databases

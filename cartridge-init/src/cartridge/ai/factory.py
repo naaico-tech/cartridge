@@ -69,7 +69,10 @@ class AIProviderFactory:
         """Register a new AI provider for specific models."""
         for model_name in model_names:
             cls._providers[model_name.lower()] = provider_class
-            logger.info(f"Registered provider {provider_class.__name__} for model {model_name}")
+            # Only log registration if not in CLI mode or if verbose is enabled
+            import os
+            if not os.environ.get('CARTRIDGE_CLI_MODE') or os.environ.get('CARTRIDGE_VERBOSE'):
+                logger.info(f"Registered provider {provider_class.__name__} for model {model_name}")
 
 
 # Mock provider for testing

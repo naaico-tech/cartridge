@@ -1,6 +1,6 @@
 # E-Commerce Database Data
 
-This directory contains comprehensive e-commerce database schema and sample data for PostgreSQL, designed to work with the Cartridge backend system.
+This directory contains comprehensive e-commerce database schema and sample data for PostgreSQL, designed to work with the `cartridge-init` system.
 
 ## 📁 Files
 
@@ -184,7 +184,7 @@ This sample data is inspired by real e-commerce patterns and includes references
 
 ## 🧪 Testing
 
-The data is designed to work with the Cartridge backend scanner and AI model generation features. You can:
+The data is designed to work with the `cartridge-init` scanner and AI model generation features. You can:
 
 1. **Scan the database** using the scanner API endpoints
 2. **Generate dbt models** based on the e-commerce schema

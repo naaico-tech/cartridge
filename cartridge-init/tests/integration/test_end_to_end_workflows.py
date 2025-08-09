@@ -1,4 +1,4 @@
-"""End-to-end workflow tests for Cartridge backend."""
+"""End-to-end workflow tests for Cartridge Init."""
 
 import pytest
 import asyncio

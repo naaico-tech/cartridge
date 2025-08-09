@@ -13,7 +13,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./cartridge-init/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U cartridge -d cartridge"]
       interval: 10s
@@ -34,13 +34,13 @@ services:
       timeout: 3s
       retries: 5
 
-  # Cartridge Backend API
-  backend:
+  # Cartridge Init API
+  cartridge-init:
     build:
-      context: ./backend
+      context: ./cartridge-init
       dockerfile: Dockerfile
       target: development
-    container_name: cartridge_backend
+    container_name: cartridge_init
     environment:
       - CARTRIDGE_DB_URL=postgresql://cartridge:cartridge@postgres:5432/cartridge
       - CARTRIDGE_REDIS_URL=redis://redis:6379/0
@@ -50,7 +50,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend/src:/app/src
+      - ./cartridge-init/src:/app/src
       - ./uploads:/app/uploads
       - ./output:/app/output
       - ./temp:/app/temp
@@ -69,7 +69,7 @@ services:
   # Celery worker for background tasks
   celery-worker:
     build:
-      context: ./backend
+      context: ./cartridge-init
       dockerfile: Dockerfile
       target: development
     container_name: cartridge_celery_worker
@@ -81,7 +81,7 @@ services:
       - CARTRIDGE_DEBUG=true
       - CARTRIDGE_LOG_LEVEL=DEBUG
     volumes:
-      - ./backend/src:/app/src
+      - ./cartridge-init/src:/app/src
       - ./uploads:/app/uploads
       - ./output:/app/output
       - ./temp:/app/temp
@@ -94,7 +94,7 @@ services:
   # Celery beat for scheduled tasks
   celery-beat:
     build:
-      context: ./backend
+      context: ./cartridge-init
       dockerfile: Dockerfile
       target: development
     container_name: cartridge_celery_beat
@@ -106,7 +106,7 @@ services:
       - CARTRIDGE_DEBUG=true
       - CARTRIDGE_LOG_LEVEL=DEBUG
     volumes:
-      - ./backend/src:/app/src
+      - ./cartridge-init/src:/app/src
     depends_on:
       postgres:
         condition: service_healthy
@@ -116,7 +116,7 @@ services:
   # Flower for monitoring Celery tasks
   flower:
     build:
-      context: ./backend
+      context: ./cartridge-init
       dockerfile: Dockerfile
       target: development
     container_name: cartridge_flower
