@@ -29,7 +29,32 @@ export ANTHROPIC_API_KEY=...
 export GEMINI_API_KEY=...
 ```
 
-## One-minute E2E
+## Quick Start
+
+### Option 1: Interactive Onboarding (Recommended)
+
+```bash
+# 1) Onboard to collect business context
+cartridge onboard --output business_context.csv
+
+# 2) Scan your database
+cartridge scan postgresql://cartridge:cartridge@localhost:5432/cartridge \
+  --schema ecommerce \
+  --output scan.json
+
+# 3) Generate with business context
+cartridge generate scan.json \
+  --ai-model gpt-4 \
+  --business-context-file business_context.csv \
+  --output ./my_dbt_project \
+  --project-name ecommerce_analytics
+
+# 4) Run dbt
+cd my_dbt_project
+dbt deps && dbt run
+```
+
+### Option 2: One-minute E2E
 
 ```bash
 # Optional: start local infra and sample data
@@ -52,48 +77,73 @@ cd my_dbt_project
 dbt deps && dbt run
 ```
 
-## CLI
+## CLI Commands
 
 ```bash
 cartridge --help
+cartridge onboard [--output business_context.csv]
 cartridge scan <CONNECTION_STRING> --schema <SCHEMA> [--output scan.json] [--format json|yaml]
 cartridge generate <SCAN_FILE> --ai-model <MODEL> [--ai-provider openai|anthropic|gemini|mock] \
-  --output <DIR> --project-name <NAME> [--business-context "..."]
+  --output <DIR> --project-name <NAME> [--business-context "..." | --business-context-file <CSV_FILE>]
 cartridge serve [--host 0.0.0.0 --port 8000 --reload]
 cartridge init-database
 cartridge reset-database
 cartridge config
 ```
 
+### Business Context Options
+
+- **`--business-context`**: Provide business context as a string
+- **`--business-context-file`**: Provide business context from a CSV file (alternative to `--business-context`)
+- **Cannot use both options together** - choose one or the other
+
+The `onboard` command creates a CSV file that can be used with `--business-context-file`.
+
 ### Examples
 
-- Postgres scan
+- **Interactive onboarding**
+```bash
+cartridge onboard --output my_business.csv
+```
+
+- **Postgres scan**
 ```bash
 cartridge scan postgresql://user:pass@host:5432/db --schema public --output scan.json
 ```
 
-- OpenAI generation
+- **OpenAI generation with business context file**
 ```bash
 export OPENAI_API_KEY=sk-...
-cartridge generate scan.json --ai-model gpt-4 --output ./dbt_proj --project-name analytics
+cartridge generate scan.json --ai-model gpt-4 --business-context-file my_business.csv --output ./dbt_proj
 ```
 
-- Gemini generation
+- **Gemini generation with inline business context**
 ```bash
 export GEMINI_API_KEY=...
-cartridge generate scan.json --ai-model gemini-2.5-flash --output ./dbt_proj
+cartridge generate scan.json --ai-model gemini-2.5-flash --business-context "E-commerce platform focusing on revenue and conversion metrics" --output ./dbt_proj
 ```
 
-- Mock provider (no key)
+- **Mock provider (no key)**
 ```bash
 cartridge generate scan.json --ai-model mock --output ./dbt_proj
 ```
 
+### Business Context CSV Format
+
+Use the provided `sample_business_context.csv` as a template, or create your own CSV with these columns:
+- `business_name`, `industry`, `business_description`
+- `primary_metrics`, `secondary_metrics`, `business_model`
+- `target_audience`, `refresh_frequency_minutes`
+- `reporting_needs`, `data_sources`, `use_cases`
+- `stakeholders`, `current_challenges`, `success_criteria`
+
 ## Inputs/Outputs
 
+- **Onboard inputs**: Interactive prompts
+- **Onboard outputs**: CSV file with business context
 - **Scan inputs**: `CONNECTION_STRING`, `--schema`
 - **Scan outputs**: `scan.json`/`scan.yaml` with tables, columns, constraints, indexes, sample data
-- **Generate inputs**: scan file + `--ai-model` (+ optional `--ai-provider` and `--business-context`)
+- **Generate inputs**: scan file + `--ai-model` (+ optional `--ai-provider` and `--business-context` or `--business-context-file`)
 - **Generate outputs**: dbt project folder with models, `schema.yml`, `packages.yml`, docs
 
 Tip: add `dbt-expectations` in `packages.yml` to enable richer tests.

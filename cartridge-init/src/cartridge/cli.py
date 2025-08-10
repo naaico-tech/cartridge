@@ -1,6 +1,7 @@
 """Command line interface for Cartridge."""
 
 import asyncio
+import csv
 import json
 import os
 import tempfile
@@ -231,8 +232,9 @@ def scan(connection_string: str, schema: str, output: Optional[str], output_form
 @click.option("--output", "-o", help="Output directory for generated project")
 @click.option("--project-name", default="generated_dbt_project", help="Name for the generated dbt project")
 @click.option("--business-context", help="Business context to guide model generation")
+@click.option("--business-context-file", help="CSV file containing business context (alternative to --business-context)")
 @click.option("--ai-provider", type=click.Choice(["openai", "anthropic", "gemini"]), help="AI provider (auto-detected from model if not specified)")
-def generate(scan_file: str, ai_model: str, output: Optional[str], project_name: str, business_context: Optional[str], ai_provider: Optional[str]):
+def generate(scan_file: str, ai_model: str, output: Optional[str], project_name: str, business_context: Optional[str], business_context_file: Optional[str], ai_provider: Optional[str]):
     """Generate dbt models from schema scan results."""
     click.echo(f"🤖 Generating models from: {scan_file}")
     click.echo(f"🧠 AI model: {ai_model}")
@@ -255,6 +257,86 @@ def generate(scan_file: str, ai_model: str, output: Optional[str], project_name:
                     scan_data = yaml.safe_load(f)
                 else:
                     raise click.ClickException("Scan file must be JSON or YAML format")
+            
+            # Process business context
+            final_business_context = business_context
+            
+            # Check for conflicting options
+            if business_context and business_context_file:
+                raise click.ClickException("Cannot specify both --business-context and --business-context-file. Choose one.")
+            
+            # Load business context from file if provided
+            if business_context_file:
+                context_path = Path(business_context_file)
+                if not context_path.exists():
+                    raise click.ClickException(f"Business context file not found: {business_context_file}")
+                
+                click.echo(f"📋 Loading business context from: {business_context_file}")
+                
+                try:
+                    with open(context_path, 'r', encoding='utf-8') as f:
+                        reader = csv.DictReader(f)
+                        context_rows = list(reader)
+                        
+                        if not context_rows:
+                            raise click.ClickException("Business context CSV file is empty")
+                        
+                        # Use the first row (assuming single business context)
+                        context_data = context_rows[0]
+                        
+                        # Build comprehensive business context from CSV data
+                        context_parts = []
+                        
+                        if context_data.get('business_name'):
+                            context_parts.append(f"Business: {context_data['business_name']}")
+                        
+                        if context_data.get('industry'):
+                            context_parts.append(f"Industry: {context_data['industry']}")
+                        
+                        if context_data.get('business_description'):
+                            context_parts.append(f"Description: {context_data['business_description']}")
+                        
+                        if context_data.get('primary_metrics'):
+                            context_parts.append(f"Primary Metrics: {context_data['primary_metrics']}")
+                        
+                        if context_data.get('secondary_metrics') and context_data['secondary_metrics'].strip():
+                            context_parts.append(f"Secondary Metrics: {context_data['secondary_metrics']}")
+                        
+                        if context_data.get('business_model'):
+                            context_parts.append(f"Business Model: {context_data['business_model']}")
+                        
+                        if context_data.get('target_audience'):
+                            context_parts.append(f"Target Audience: {context_data['target_audience']}")
+                        
+                        if context_data.get('refresh_frequency_minutes'):
+                            context_parts.append(f"Data Refresh Frequency: {context_data['refresh_frequency_minutes']} minutes")
+                        
+                        if context_data.get('reporting_needs'):
+                            context_parts.append(f"Reporting Needs: {context_data['reporting_needs']}")
+                        
+                        if context_data.get('data_sources'):
+                            context_parts.append(f"Data Sources: {context_data['data_sources']}")
+                        
+                        if context_data.get('use_cases'):
+                            context_parts.append(f"Use Cases: {context_data['use_cases']}")
+                        
+                        if context_data.get('stakeholders'):
+                            context_parts.append(f"Stakeholders: {context_data['stakeholders']}")
+                        
+                        if context_data.get('current_challenges') and context_data['current_challenges'].strip():
+                            context_parts.append(f"Current Challenges: {context_data['current_challenges']}")
+                        
+                        if context_data.get('success_criteria'):
+                            context_parts.append(f"Success Criteria: {context_data['success_criteria']}")
+                        
+                        final_business_context = "\n".join(context_parts)
+                        
+                        click.echo(f"✅ Loaded business context for: {context_data.get('business_name', 'Unknown Business')}")
+                        
+                except csv.Error as e:
+                    raise click.ClickException(f"Error reading CSV file: {str(e)}")
+                except Exception as e:
+                    raise click.ClickException(f"Error processing business context file: {str(e)}")
             
             # Auto-detect AI provider if not specified
             if not ai_provider:
@@ -340,7 +422,7 @@ def generate(scan_file: str, ai_model: str, output: Optional[str], project_name:
             request = ModelGenerationRequest(
                 tables=tables,
                 model_types=[ModelType.STAGING, ModelType.MARTS],
-                business_context=business_context or f"Generated dbt models for {scan_data.get('database_type', 'unknown')} database",
+                business_context=final_business_context or f"Generated dbt models for {scan_data.get('database_type', 'unknown')} database",
                 include_tests=True,
                 include_documentation=True,
                 target_warehouse=scan_data.get("database_type", "postgresql"),
@@ -404,6 +486,142 @@ def generate(scan_file: str, ai_model: str, output: Optional[str], project_name:
             raise click.ClickException(f"Generation failed: {str(e)}")
     
     asyncio.run(_generate())
+
+
+@main.command()
+@click.option("--output", "-o", help="Output CSV file for business context", default="business_context.csv")
+def onboard(output: str):
+    """Interactive onboarding to collect business context and analytics requirements."""
+    click.echo("🚀 Welcome to Cartridge Onboarding!")
+    click.echo("Let's gather some information about your business and analytics needs.\n")
+    
+    # Collect business information
+    business_info = {}
+    
+    # Business name and industry
+    business_info['business_name'] = click.prompt("📊 What is your business/company name?", type=str)
+    business_info['industry'] = click.prompt("🏢 What industry are you in? (e.g., e-commerce, SaaS, healthcare)", type=str)
+    
+    # Business description
+    business_info['business_description'] = click.prompt(
+        "📝 Provide a brief description of your business (1-2 sentences)", 
+        type=str
+    )
+    
+    # Key metrics and KPIs
+    click.echo("\n💡 Let's understand your key business metrics:")
+    business_info['primary_metrics'] = click.prompt(
+        "🎯 What are your primary business metrics? (e.g., revenue, user growth, conversion rate)", 
+        type=str
+    )
+    
+    business_info['secondary_metrics'] = click.prompt(
+        "📈 What are some secondary metrics you track? (optional)", 
+        type=str, 
+        default="", 
+        show_default=False
+    )
+    
+    # Business model
+    business_info['business_model'] = click.prompt(
+        "🔄 What's your business model? (e.g., subscription, marketplace, direct sales)", 
+        type=str
+    )
+    
+    # Target audience
+    business_info['target_audience'] = click.prompt(
+        "👥 Who is your target audience/customer base?", 
+        type=str
+    )
+    
+    # Analytics requirements
+    click.echo("\n📊 Now let's understand your analytics requirements:")
+    
+    # Refresh frequency
+    while True:
+        try:
+            refresh_minutes = click.prompt(
+                "⏱️  How frequently do you need your analytics data to be updated? (minimum 15 minutes)", 
+                type=int
+            )
+            if refresh_minutes >= 15:
+                business_info['refresh_frequency_minutes'] = refresh_minutes
+                break
+            else:
+                click.echo("❌ Minimum refresh frequency is 15 minutes. Please enter a value >= 15.")
+        except click.Abort:
+            raise
+        except:
+            click.echo("❌ Please enter a valid number.")
+    
+    # Reporting needs
+    business_info['reporting_needs'] = click.prompt(
+        "📋 What kind of reports do you need? (e.g., daily sales, monthly cohorts, real-time dashboards)", 
+        type=str
+    )
+    
+    # Data sources
+    business_info['data_sources'] = click.prompt(
+        "🔌 What are your main data sources? (e.g., PostgreSQL, Stripe, Google Analytics)", 
+        type=str
+    )
+    
+    # Use cases
+    business_info['use_cases'] = click.prompt(
+        "🎯 What are your main analytics use cases? (e.g., customer segmentation, sales forecasting)", 
+        type=str
+    )
+    
+    # Stakeholders
+    business_info['stakeholders'] = click.prompt(
+        "👔 Who are the main stakeholders who will use these analytics? (e.g., executives, marketing team)", 
+        type=str
+    )
+    
+    # Current challenges
+    business_info['current_challenges'] = click.prompt(
+        "🚧 What are your current data/analytics challenges? (optional)", 
+        type=str, 
+        default="", 
+        show_default=False
+    )
+    
+    # Success criteria
+    business_info['success_criteria'] = click.prompt(
+        "🏆 How will you measure the success of your analytics implementation?", 
+        type=str
+    )
+    
+    # Save to CSV
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Create CSV with headers and data
+    fieldnames = [
+        'business_name', 'industry', 'business_description', 'primary_metrics', 
+        'secondary_metrics', 'business_model', 'target_audience', 'refresh_frequency_minutes',
+        'reporting_needs', 'data_sources', 'use_cases', 'stakeholders', 
+        'current_challenges', 'success_criteria'
+    ]
+    
+    with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerow(business_info)
+    
+    click.echo(f"\n✅ Business context saved to: {output_path}")
+    click.echo(f"📁 You can now use this file with: --business-context-file {output_path}")
+    
+    # Show summary
+    click.echo("\n📊 Onboarding Summary:")
+    click.echo(f"   Business: {business_info['business_name']} ({business_info['industry']})")
+    click.echo(f"   Primary Metrics: {business_info['primary_metrics']}")
+    click.echo(f"   Refresh Frequency: {business_info['refresh_frequency_minutes']} minutes")
+    click.echo(f"   Main Use Cases: {business_info['use_cases']}")
+    
+    click.echo(f"\n🚀 Next steps:")
+    click.echo(f"   1. Scan your database: cartridge scan <CONNECTION_STRING> --schema <SCHEMA> --output scan.json")
+    click.echo(f"   2. Generate models: cartridge generate scan.json --business-context-file {output_path}")
 
 
 @main.command()
