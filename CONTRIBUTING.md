@@ -10,7 +10,7 @@ Thank you for your interest in contributing! We welcome issues and pull requests
 3. If your change relates to a bug or feature, open an issue first and reference it in your PR
 4. Make your changes following our code style and add tests where appropriate
 5. Run tests locally and ensure they pass
-6. Submit a pull request to `main` with a clear description and screenshots/logs if relevant
+6. Submit a pull request to `master` with a clear description and screenshots/logs if relevant
 
 ### Development Setup
 
