@@ -2,9 +2,10 @@
 
 AI-powered schema inference and dbt project generation.
 
-- **Inputs**: database URI and schema name
+- **Inputs**: database URI and schema name(s), or multi-database configuration
 - **Outputs**: dbt project (models, docs, optional tests)
 - **Engines**: OpenAI, Anthropic, Gemini, or mock; SQLAlchemy for scanning
+- **Features**: Single/multi-schema scanning, multi-database scanning, organized output
 - **Optional**: add `dbt-expectations` tests
 
 ## Install
@@ -82,7 +83,8 @@ dbt deps && dbt run
 ```bash
 cartridge --help
 cartridge onboard [--output business_context.csv]
-cartridge scan <CONNECTION_STRING> --schema <SCHEMA> [--output scan.json] [--format json|yaml]
+cartridge scan <CONNECTION_STRING> [--schema <SCHEMA>] [--schemas <SCHEMA1,SCHEMA2,...>] [--output scan.json] [--format json|yaml]
+cartridge scan-multi <CONFIG_FILE> [--output scan.json] [--format json|yaml]
 cartridge generate <SCAN_FILE> --ai-model <MODEL> [--ai-provider openai|anthropic|gemini|mock] \
   --output <DIR> --project-name <NAME> [--business-context "..." | --business-context-file <CSV_FILE>]
 cartridge serve [--host 0.0.0.0 --port 8000 --reload]
@@ -90,6 +92,12 @@ cartridge init-database
 cartridge reset-database
 cartridge config
 ```
+
+### Scanning Options
+
+- **Single schema**: `--schema public` (default: "public")
+- **Multiple schemas**: `--schemas public,staging,marts` (comma-separated)
+- **Multi-database**: `scan-multi config.yml` (YAML/JSON configuration file)
 
 ### Business Context Options
 
@@ -101,15 +109,65 @@ The `onboard` command creates a CSV file that can be used with `--business-conte
 
 ### Examples
 
+#### Basic Scanning
+
 - **Interactive onboarding**
 ```bash
 cartridge onboard --output my_business.csv
 ```
 
-- **Postgres scan**
+- **Single schema scan (PostgreSQL)**
 ```bash
 cartridge scan postgresql://user:pass@host:5432/db --schema public --output scan.json
 ```
+
+- **Multi-schema scan (same database)**
+```bash
+cartridge scan postgresql://user:pass@host:5432/db --schemas public,staging,marts --output multi_schema_scan.json
+```
+
+- **Multi-database scan (configuration file)**
+```bash
+cartridge scan-multi databases_config.yml --output multi_db_scan.json
+```
+
+#### Multi-Database Configuration File
+
+Create `databases_config.yml`:
+```yaml
+databases:
+  - name: "sales_db"
+    uri: "postgresql://user:password@localhost:5432/sales"
+    schemas: ["public", "analytics", "reporting"]
+  
+  - name: "marketing_db"
+    uri: "mysql://user:password@localhost:3306/marketing"
+    schemas: ["raw", "campaigns", "metrics"]
+  
+  - name: "warehouse_db"
+    uri: "postgresql://user:password@warehouse.example.com:5432/warehouse"
+    schemas: ["staging", "marts", "snapshots"]
+```
+
+Or use JSON format (`databases_config.json`):
+```json
+{
+  "databases": [
+    {
+      "name": "sales_db",
+      "uri": "postgresql://user:password@localhost:5432/sales",
+      "schemas": ["public", "analytics"]
+    },
+    {
+      "name": "marketing_db",
+      "uri": "mysql://user:password@localhost:3306/marketing",
+      "schemas": ["raw", "campaigns"]
+    }
+  ]
+}
+```
+
+#### Model Generation
 
 - **OpenAI generation with business context file**
 ```bash
@@ -141,10 +199,72 @@ Use the provided `sample_business_context.csv` as a template, or create your own
 
 - **Onboard inputs**: Interactive prompts
 - **Onboard outputs**: CSV file with business context
-- **Scan inputs**: `CONNECTION_STRING`, `--schema`
-- **Scan outputs**: `scan.json`/`scan.yaml` with tables, columns, constraints, indexes, sample data
+- **Scan inputs**: 
+  - Single schema: `CONNECTION_STRING`, `--schema`
+  - Multi-schema: `CONNECTION_STRING`, `--schemas schema1,schema2,schema3`
+  - Multi-database: Configuration file (YAML/JSON)
+- **Scan outputs**: 
+  - Single schema: `scan.json`/`scan.yaml` with tables, columns, constraints, indexes, sample data
+  - Multi-schema: Organized by schema with summary statistics
+  - Multi-database: Organized by database and schema with comprehensive metadata
 - **Generate inputs**: scan file + `--ai-model` (+ optional `--ai-provider` and `--business-context` or `--business-context-file`)
 - **Generate outputs**: dbt project folder with models, `schema.yml`, `packages.yml`, docs
+
+### Output Format Examples
+
+#### Single Schema Output (Backward Compatible)
+```json
+{
+  "database_type": "postgresql",
+  "schema": "public",
+  "connection_string": "postgresql://***@localhost:5432/db",
+  "scan_timestamp": "2024-01-01T10:00:00Z",
+  "tables": [...]
+}
+```
+
+#### Multi-Schema Output
+```json
+{
+  "database_type": "postgresql",
+  "schemas": ["public", "staging", "marts"],
+  "total_schemas": 3,
+  "total_tables": 25,
+  "scan_timestamp": "2024-01-01T10:00:00Z",
+  "schemas_data": [
+    {
+      "schema": "public",
+      "scan_timestamp": "2024-01-01T10:00:00Z",
+      "tables": [...]
+    },
+    {
+      "schema": "staging", 
+      "tables": [...]
+    }
+  ]
+}
+```
+
+#### Multi-Database Output
+```json
+{
+  "scan_type": "multi_database",
+  "total_databases": 2,
+  "total_schemas": 5,
+  "total_tables": 50,
+  "scan_timestamp": "2024-01-01T10:00:00Z",
+  "databases": [
+    {
+      "name": "sales_db",
+      "database_type": "postgresql",
+      "schemas": ["public", "analytics"],
+      "total_schemas": 2,
+      "total_tables": 20,
+      "schemas_data": [...]
+    }
+  ]
+}
+```
 
 Tip: add `dbt-expectations` in `packages.yml` to enable richer tests.
 
