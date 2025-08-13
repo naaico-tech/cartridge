@@ -1,0 +1,7 @@
+databases:
+  - name: "main_db"
+    uri: "postgresql://cartridge:cartridge@localhost:5432/cartridge"
+    schemas: ["public"]
+  - name: "analytics_db"
+    uri: "postgresql://cartridge:cartridge@localhost:5432/cartridge"
+    schemas: ["analytics"]

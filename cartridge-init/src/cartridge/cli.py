@@ -703,7 +703,46 @@ def generate(scan_file: str, ai_model: str, output: Optional[str], project_name:
             from cartridge.ai.base import TableMapping, ColumnMapping
             
             tables = []
-            for table_data in scan_data.get("tables", []):
+            all_table_data = []
+            
+            # Handle different scan result formats
+            if "scan_type" in scan_data and scan_data["scan_type"] == "multi_database":
+                # Multi-database format: {"databases": [{"schemas_data": [{"tables": [...]}]}]}
+                click.echo("📊 Detected multi-database scan format")
+                for db_data in scan_data.get("databases", []):
+                    db_name = db_data.get("name", "unknown")
+                    click.echo(f"   📁 Processing database: {db_name}")
+                    for schema_data in db_data.get("schemas_data", []):
+                        schema_name = schema_data.get("schema", "public")
+                        schema_tables = schema_data.get("tables", [])
+                        click.echo(f"      📂 Schema '{schema_name}': {len(schema_tables)} tables")
+                        # Add database context to table data
+                        for table_data in schema_tables:
+                            table_data["_source_database"] = db_name
+                            table_data["_source_schema"] = schema_name
+                        all_table_data.extend(schema_tables)
+            elif "schemas_data" in scan_data:
+                # Multi-schema format: {"schemas_data": [{"schema": "name", "tables": [...]}]}
+                click.echo("📊 Detected multi-schema scan format")
+                for schema_data in scan_data.get("schemas_data", []):
+                    schema_name = schema_data.get("schema", "public")
+                    schema_tables = schema_data.get("tables", [])
+                    click.echo(f"   📂 Schema '{schema_name}': {len(schema_tables)} tables")
+                    # Add schema context to table data
+                    for table_data in schema_tables:
+                        table_data["_source_schema"] = schema_name
+                    all_table_data.extend(schema_tables)
+            elif "tables" in scan_data:
+                # Single schema format: {"tables": [...]}
+                click.echo("📊 Detected single schema scan format")
+                all_table_data = scan_data.get("tables", [])
+            else:
+                raise click.ClickException("Unsupported scan result format. Expected 'tables', 'schemas_data', or 'databases' key.")
+            
+            click.echo(f"📋 Found {len(all_table_data)} tables across all schemas/databases")
+            
+            # Convert all table data to TableMapping objects
+            for table_data in all_table_data:
                 columns = []
                 for col_data in table_data.get("columns", []):
                     column = ColumnMapping(
@@ -715,12 +754,23 @@ def generate(scan_file: str, ai_model: str, output: Optional[str], project_name:
                     )
                     columns.append(column)
                 
+                # Use source schema/database info if available, otherwise fallback to table schema
+                source_schema = table_data.get("_source_schema", table_data.get("schema", "public"))
+                source_database = table_data.get("_source_database", "")
+                
+                # Create a descriptive name that includes source context
+                table_description = f"Table {table_data['name']} with {len(columns)} columns"
+                if source_database:
+                    table_description += f" (from database: {source_database})"
+                if source_schema != "public":
+                    table_description += f" (schema: {source_schema})"
+                
                 table = TableMapping(
                     name=table_data["name"],
-                    schema=table_data.get("schema", "public"),
+                    schema=source_schema,
                     table_type="table",
                     columns=columns,
-                    description=f"Table {table_data['name']} with {len(columns)} columns"
+                    description=table_description
                 )
                 tables.append(table)
             
