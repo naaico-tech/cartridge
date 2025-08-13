@@ -1,0 +1,5 @@
+---
+description: Always write unit tests if src functions have been changed or modified
+globs:
+alwaysApply: false
+---

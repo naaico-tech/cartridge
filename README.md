@@ -3,9 +3,10 @@
 A modular data engineering toolkit. Use individual components or the whole stack.
 
 ### A. cartridge-init: Schema Inference & dbt Gen
-- **Inputs**: database URI / schema name
+- **Inputs**: database URI / schema name(s), or multi-database configuration
 - **Uses**: SQLAlchemy + LLM (OpenAI, OSS like Ollama or LM Studio)
 - **Outputs**: AI-generated dbt models + docs
+- **Features**: Single/multi-schema scanning, multi-database scanning, organized output
 - **Optional**: Add data quality tests using dbt-expectations
 - **Tech**: Python, SQLAlchemy, OpenAI/LLM, dbt-core
 

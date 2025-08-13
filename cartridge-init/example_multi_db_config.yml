@@ -1,0 +1,21 @@
+# Example multi-database configuration file for cartridge-init
+# Usage: cartridge scan-multi example_multi_db_config.yml --output results.json
+
+databases:
+  - name: "sales_db"
+    uri: "postgresql://user:password@localhost:5432/sales"
+    schemas: ["public", "analytics", "reporting"]
+  
+  - name: "marketing_db"
+    uri: "mysql://user:password@localhost:3306/marketing"
+    schemas: ["raw", "campaigns", "metrics"]
+  
+  - name: "warehouse_db"
+    uri: "postgresql://user:password@warehouse.example.com:5432/warehouse"
+    schemas: ["staging", "marts", "snapshots"]
+
+# Optional: Global settings (future enhancement)
+# settings:
+#   include_samples: true
+#   sample_size: 100
+#   parallel_scans: true

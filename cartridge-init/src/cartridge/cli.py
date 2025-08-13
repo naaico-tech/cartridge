@@ -89,13 +89,23 @@ def reset_database():
 
 @main.command()
 @click.argument("connection_string")
-@click.option("--schema", default="public", help="Schema to scan")
+@click.option("--schema", default="public", help="Schema to scan (single schema)")
+@click.option("--schemas", help="Multiple schemas to scan (comma-separated: schema1,schema2,schema3)")
 @click.option("--output", "-o", help="Output file for scan results")
 @click.option("--format", "output_format", default="json", type=click.Choice(["json", "yaml"]), help="Output format")
-def scan(connection_string: str, schema: str, output: Optional[str], output_format: str):
-    """Scan a database schema."""
-    click.echo(f"🔍 Scanning database: {connection_string}")
-    click.echo(f"📊 Schema: {schema}")
+def scan(connection_string: str, schema: str, schemas: Optional[str], output: Optional[str], output_format: str):
+    """Scan a database schema or multiple schemas."""
+    # Determine which schemas to scan
+    if schemas:
+        schema_list = [s.strip() for s in schemas.split(',') if s.strip()]
+        if not schema_list:
+            raise click.ClickException("Invalid schemas format. Use comma-separated values: schema1,schema2,schema3")
+        click.echo(f"🔍 Scanning database: {connection_string}")
+        click.echo(f"📊 Schemas: {', '.join(schema_list)}")
+    else:
+        schema_list = [schema]
+        click.echo(f"🔍 Scanning database: {connection_string}")
+        click.echo(f"📊 Schema: {schema}")
     
     async def _scan():
         try:
@@ -117,79 +127,152 @@ def scan(connection_string: str, schema: str, output: Optional[str], output_form
             if not connector_type:
                 raise click.ClickException(f"Unsupported database type: {db_type}")
             
-            # Create connection configuration
-            connection_config = {
-                "host": parsed_url.hostname,
-                "port": parsed_url.port,
-                "database": parsed_url.path.lstrip('/') if parsed_url.path else None,
-                "username": parsed_url.username,
-                "password": parsed_url.password,
-                "schema": schema,
-            }
+            # Scan all schemas
+            all_scan_results = []
+            total_tables = 0
             
-            # Remove None values
-            connection_config = {k: v for k, v in connection_config.items() if v is not None}
-            
-            click.echo("⚡ Creating database connector...")
-            connector = ConnectorFactory.create_connector(connector_type, connection_config)
-            
-            click.echo("🔗 Testing connection...")
-            await connector.test_connection()
-            click.echo("✅ Connection successful!")
-            
-            click.echo(f"📋 Scanning schema '{schema}'...")
-            scan_result = await connector.scan_schema()
-            
-            click.echo(f"✅ Scan completed! Found {len(scan_result.tables)} tables")
-            
-            # Prepare output data
-            output_data = {
-                "database_type": connector_type,
-                "schema": schema,
-                "connection_string": connection_string.replace(parsed_url.password or "", "***") if parsed_url.password else connection_string,
-                "scan_timestamp": scan_result.scan_timestamp if scan_result.scan_timestamp else None,
-                "tables": []
-            }
-            
-            for table in scan_result.tables:
-                table_data = {
-                    "name": table.name,
-                    "schema": table.schema,
-                    "type": table.table_type,
-                    "row_count": table.row_count,
-                    "columns": [
-                        {
-                            "name": col.name,
-                            "data_type": col.data_type,
-                            "is_nullable": col.nullable,
-                            "is_primary_key": col.is_primary_key,
-                            "default_value": col.default_value,
-                            "comment": col.comment
-                        }
-                        for col in table.columns
-                    ],
-                    "constraints": [
-                        {
-                            "name": constraint.name,
-                            "type": constraint.type,
-                            "columns": constraint.columns,
-                            "referenced_table": constraint.referenced_table,
-                            "referenced_columns": constraint.referenced_columns
-                        }
-                        for constraint in table.constraints
-                    ],
-                    "indexes": [
-                        {
-                            "name": index.name,
-                            "columns": index.columns,
-                            "is_unique": index.is_unique,
-                            "is_primary": index.is_primary
-                        }
-                        for index in table.indexes
-                    ],
-                    "sample_data": table.sample_data
+            for schema_name in schema_list:
+                # Create connection configuration for this schema
+                connection_config = {
+                    "host": parsed_url.hostname,
+                    "port": parsed_url.port,
+                    "database": parsed_url.path.lstrip('/') if parsed_url.path else None,
+                    "username": parsed_url.username,
+                    "password": parsed_url.password,
+                    "schema": schema_name,
                 }
-                output_data["tables"].append(table_data)
+                
+                # Remove None values
+                connection_config = {k: v for k, v in connection_config.items() if v is not None}
+                
+                click.echo(f"⚡ Creating database connector for schema '{schema_name}'...")
+                connector = ConnectorFactory.create_connector(connector_type, connection_config)
+                
+                click.echo(f"🔗 Testing connection to schema '{schema_name}'...")
+                await connector.test_connection()
+                click.echo(f"✅ Connection to schema '{schema_name}' successful!")
+                
+                click.echo(f"📋 Scanning schema '{schema_name}'...")
+                scan_result = await connector.scan_schema()
+                
+                click.echo(f"✅ Schema '{schema_name}' scan completed! Found {len(scan_result.tables)} tables")
+                all_scan_results.append(scan_result)
+                total_tables += len(scan_result.tables)
+            
+            click.echo(f"🎉 All scans completed! Found {total_tables} tables across {len(schema_list)} schema(s)")
+            
+            # Prepare output data for multiple schemas
+            if len(schema_list) == 1:
+                # Single schema - maintain backward compatibility
+                scan_result = all_scan_results[0]
+                output_data = {
+                    "database_type": connector_type,
+                    "schema": schema_list[0],
+                    "connection_string": connection_string.replace(parsed_url.password or "", "***") if parsed_url.password else connection_string,
+                    "scan_timestamp": scan_result.scan_timestamp if scan_result.scan_timestamp else None,
+                    "tables": []
+                }
+                
+                # Process tables for single schema (backward compatibility)
+                for table in scan_result.tables:
+                    table_data = {
+                        "name": table.name,
+                        "schema": table.schema,
+                        "type": table.table_type,
+                        "row_count": table.row_count,
+                        "columns": [
+                            {
+                                "name": col.name,
+                                "data_type": col.data_type,
+                                "is_nullable": col.nullable,
+                                "is_primary_key": col.is_primary_key,
+                                "default_value": col.default_value,
+                                "comment": col.comment
+                            }
+                            for col in table.columns
+                        ],
+                        "constraints": [
+                            {
+                                "name": constraint.name,
+                                "type": constraint.type,
+                                "columns": constraint.columns,
+                                "referenced_table": constraint.referenced_table,
+                                "referenced_columns": constraint.referenced_columns
+                            }
+                            for constraint in table.constraints
+                        ],
+                        "indexes": [
+                            {
+                                "name": index.name,
+                                "columns": index.columns,
+                                "is_unique": index.is_unique,
+                                "is_primary": index.is_primary
+                            }
+                            for index in table.indexes
+                        ],
+                        "sample_data": table.sample_data
+                    }
+                    output_data["tables"].append(table_data)
+            else:
+                # Multiple schemas - new format
+                output_data = {
+                    "database_type": connector_type,
+                    "schemas": schema_list,
+                    "connection_string": connection_string.replace(parsed_url.password or "", "***") if parsed_url.password else connection_string,
+                    "scan_timestamp": max(result.scan_timestamp for result in all_scan_results if result.scan_timestamp),
+                    "total_schemas": len(schema_list),
+                    "total_tables": total_tables,
+                    "schemas_data": []
+                }
+                
+                for i, scan_result in enumerate(all_scan_results):
+                    schema_data = {
+                        "schema": schema_list[i],
+                        "scan_timestamp": scan_result.scan_timestamp,
+                        "tables": []
+                    }
+                    
+                    for table in scan_result.tables:
+                        table_data = {
+                            "name": table.name,
+                            "schema": table.schema,
+                            "type": table.table_type,
+                            "row_count": table.row_count,
+                            "columns": [
+                                {
+                                    "name": col.name,
+                                    "data_type": col.data_type,
+                                    "is_nullable": col.nullable,
+                                    "is_primary_key": col.is_primary_key,
+                                    "default_value": col.default_value,
+                                    "comment": col.comment
+                                }
+                                for col in table.columns
+                            ],
+                            "constraints": [
+                                {
+                                    "name": constraint.name,
+                                    "type": constraint.type,
+                                    "columns": constraint.columns,
+                                    "referenced_table": constraint.referenced_table,
+                                    "referenced_columns": constraint.referenced_columns
+                                }
+                                for constraint in table.constraints
+                            ],
+                            "indexes": [
+                                {
+                                    "name": index.name,
+                                    "columns": index.columns,
+                                    "is_unique": index.is_unique,
+                                    "is_primary": index.is_primary
+                                }
+                                for index in table.indexes
+                            ],
+                            "sample_data": table.sample_data
+                        }
+                        schema_data["tables"].append(table_data)
+                    
+                    output_data["schemas_data"].append(schema_data)
             
             # Output results
             if output:
@@ -209,11 +292,24 @@ def scan(connection_string: str, schema: str, output: Optional[str], output_form
                 # Print summary to console
                 click.echo("\n📊 Scan Summary:")
                 click.echo(f"   Database Type: {connector_type}")
-                click.echo(f"   Schema: {schema}")
-                click.echo(f"   Tables: {len(output_data['tables'])}")
                 
-                for table in output_data['tables']:
-                    click.echo(f"   📋 {table['name']} ({table['type']}) - {len(table['columns'])} columns")
+                if len(schema_list) == 1:
+                    # Single schema output (backward compatibility)
+                    click.echo(f"   Schema: {schema_list[0]}")
+                    click.echo(f"   Tables: {len(output_data['tables'])}")
+                    
+                    for table in output_data['tables']:
+                        click.echo(f"   📋 {table['name']} ({table['type']}) - {len(table['columns'])} columns")
+                else:
+                    # Multiple schemas output
+                    click.echo(f"   Schemas: {', '.join(schema_list)}")
+                    click.echo(f"   Total Tables: {output_data['total_tables']}")
+                    
+                    for schema_data in output_data['schemas_data']:
+                        click.echo(f"\n   📂 Schema: {schema_data['schema']}")
+                        click.echo(f"      Tables: {len(schema_data['tables'])}")
+                        for table in schema_data['tables']:
+                            click.echo(f"      📋 {table['name']} ({table['type']}) - {len(table['columns'])} columns")
                 
                 if output_format == "json":
                     click.echo("\n📄 Full Results (JSON):")
@@ -224,6 +320,237 @@ def scan(connection_string: str, schema: str, output: Optional[str], output_form
             raise click.ClickException(f"Scan failed: {str(e)}")
     
     asyncio.run(_scan())
+
+
+@main.command()
+@click.argument("config_file")
+@click.option("--output", "-o", help="Output file for scan results")
+@click.option("--format", "output_format", default="json", type=click.Choice(["json", "yaml"]), help="Output format")
+def scan_multi(config_file: str, output: Optional[str], output_format: str):
+    """Scan multiple databases and schemas from a configuration file."""
+    import yaml
+    
+    click.echo(f"🔍 Scanning multiple databases from config: {config_file}")
+    
+    async def _scan_multi():
+        try:
+            # Load configuration file
+            config_path = Path(config_file)
+            if not config_path.exists():
+                raise click.ClickException(f"Configuration file not found: {config_file}")
+            
+            with open(config_path, 'r') as f:
+                if config_file.endswith('.yaml') or config_file.endswith('.yml'):
+                    config = yaml.safe_load(f)
+                elif config_file.endswith('.json'):
+                    config = json.load(f)
+                else:
+                    raise click.ClickException("Configuration file must be YAML (.yml/.yaml) or JSON (.json)")
+            
+            # Validate configuration structure
+            if 'databases' not in config:
+                raise click.ClickException("Configuration file must contain 'databases' key")
+            
+            databases = config['databases']
+            if not isinstance(databases, list) or not databases:
+                raise click.ClickException("'databases' must be a non-empty list")
+            
+            # Scan all databases
+            all_database_results = []
+            total_databases = len(databases)
+            total_schemas = 0
+            total_tables = 0
+            
+            for i, db_config in enumerate(databases, 1):
+                try:
+                    # Validate database configuration
+                    required_fields = ['name', 'uri', 'schemas']
+                    for field in required_fields:
+                        if field not in db_config:
+                            raise click.ClickException(f"Database config {i} missing required field: {field}")
+                    
+                    db_name = db_config['name']
+                    connection_string = db_config['uri']
+                    schema_list = db_config['schemas']
+                    
+                    if not isinstance(schema_list, list) or not schema_list:
+                        raise click.ClickException(f"Database '{db_name}' schemas must be a non-empty list")
+                    
+                    click.echo(f"\n🏢 [{i}/{total_databases}] Processing database: {db_name}")
+                    click.echo(f"📊 Schemas: {', '.join(schema_list)}")
+                    
+                    # Parse connection string
+                    parsed_url = urlparse(connection_string)
+                    db_type = parsed_url.scheme
+                    
+                    # Map URL schemes to connector types
+                    type_mapping = {
+                        "postgresql": "postgresql",
+                        "postgres": "postgresql", 
+                        "mysql": "mysql",
+                        "snowflake": "snowflake",
+                        "bigquery": "bigquery",
+                        "redshift": "redshift"
+                    }
+                    
+                    connector_type = type_mapping.get(db_type)
+                    if not connector_type:
+                        raise click.ClickException(f"Unsupported database type: {db_type}")
+                    
+                    # Scan all schemas for this database
+                    database_scan_results = []
+                    database_table_count = 0
+                    
+                    for schema_name in schema_list:
+                        # Create connection configuration for this schema
+                        connection_config = {
+                            "host": parsed_url.hostname,
+                            "port": parsed_url.port,
+                            "database": parsed_url.path.lstrip('/') if parsed_url.path else None,
+                            "username": parsed_url.username,
+                            "password": parsed_url.password,
+                            "schema": schema_name,
+                        }
+                        
+                        # Remove None values
+                        connection_config = {k: v for k, v in connection_config.items() if v is not None}
+                        
+                        click.echo(f"  ⚡ Scanning schema '{schema_name}'...")
+                        connector = ConnectorFactory.create_connector(connector_type, connection_config)
+                        
+                        # Test connection
+                        await connector.test_connection()
+                        
+                        # Perform scan
+                        scan_result = await connector.scan_schema()
+                        
+                        click.echo(f"  ✅ Schema '{schema_name}' completed! Found {len(scan_result.tables)} tables")
+                        database_scan_results.append(scan_result)
+                        database_table_count += len(scan_result.tables)
+                    
+                    # Compile database results
+                    database_result = {
+                        "name": db_name,
+                        "database_type": connector_type,
+                        "connection_string": connection_string.replace(parsed_url.password or "", "***") if parsed_url.password else connection_string,
+                        "schemas": schema_list,
+                        "total_schemas": len(schema_list),
+                        "total_tables": database_table_count,
+                        "scan_timestamp": max(result.scan_timestamp for result in database_scan_results if result.scan_timestamp),
+                        "schemas_data": []
+                    }
+                    
+                    for j, scan_result in enumerate(database_scan_results):
+                        schema_data = {
+                            "schema": schema_list[j],
+                            "scan_timestamp": scan_result.scan_timestamp,
+                            "tables": []
+                        }
+                        
+                        for table in scan_result.tables:
+                            table_data = {
+                                "name": table.name,
+                                "schema": table.schema,
+                                "type": table.table_type,
+                                "row_count": table.row_count,
+                                "columns": [
+                                    {
+                                        "name": col.name,
+                                        "data_type": col.data_type,
+                                        "is_nullable": col.nullable,
+                                        "is_primary_key": col.is_primary_key,
+                                        "default_value": col.default_value,
+                                        "comment": col.comment
+                                    }
+                                    for col in table.columns
+                                ],
+                                "constraints": [
+                                    {
+                                        "name": constraint.name,
+                                        "type": constraint.type,
+                                        "columns": constraint.columns,
+                                        "referenced_table": constraint.referenced_table,
+                                        "referenced_columns": constraint.referenced_columns
+                                    }
+                                    for constraint in table.constraints
+                                ],
+                                "indexes": [
+                                    {
+                                        "name": index.name,
+                                        "columns": index.columns,
+                                        "is_unique": index.is_unique,
+                                        "is_primary": index.is_primary
+                                    }
+                                    for index in table.indexes
+                                ],
+                                "sample_data": table.sample_data
+                            }
+                            schema_data["tables"].append(table_data)
+                        
+                        database_result["schemas_data"].append(schema_data)
+                    
+                    all_database_results.append(database_result)
+                    total_schemas += len(schema_list)
+                    total_tables += database_table_count
+                    
+                    click.echo(f"✅ Database '{db_name}' completed! {database_table_count} tables across {len(schema_list)} schema(s)")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to scan database {db_config.get('name', 'unknown')}", error=str(e))
+                    click.echo(f"❌ Failed to scan database '{db_config.get('name', 'unknown')}': {str(e)}")
+                    continue
+            
+            click.echo(f"\n🎉 Multi-database scan completed!")
+            click.echo(f"   Databases: {len(all_database_results)}/{total_databases}")
+            click.echo(f"   Total Schemas: {total_schemas}")
+            click.echo(f"   Total Tables: {total_tables}")
+            
+            # Prepare final output
+            import time
+            output_data = {
+                "scan_type": "multi_database",
+                "total_databases": len(all_database_results),
+                "total_schemas": total_schemas,
+                "total_tables": total_tables,
+                "scan_timestamp": max(db['scan_timestamp'] for db in all_database_results if db['scan_timestamp']) if all_database_results else time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "databases": all_database_results
+            }
+            
+            # Output results
+            if output:
+                output_path = Path(output)
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                
+                if output_format == "json":
+                    with open(output_path, 'w') as f:
+                        json.dump(output_data, f, indent=2, default=str)
+                elif output_format == "yaml":
+                    with open(output_path, 'w') as f:
+                        yaml.dump(output_data, f, default_flow_style=False)
+                
+                click.echo(f"📄 Results saved to: {output_path}")
+            else:
+                # Print summary to console
+                click.echo("\n📊 Multi-Database Scan Summary:")
+                for db_result in all_database_results:
+                    click.echo(f"\n🏢 Database: {db_result['name']} ({db_result['database_type']})")
+                    click.echo(f"   Schemas: {', '.join(db_result['schemas'])}")
+                    click.echo(f"   Total Tables: {db_result['total_tables']}")
+                    
+                    for schema_data in db_result['schemas_data']:
+                        click.echo(f"   📂 Schema: {schema_data['schema']}")
+                        for table in schema_data['tables']:
+                            click.echo(f"      📋 {table['name']} ({table['type']}) - {len(table['columns'])} columns")
+                
+                if output_format == "json":
+                    click.echo("\n📄 Full Results (JSON):")
+                    click.echo(json.dumps(output_data, indent=2, default=str))
+            
+        except Exception as e:
+            logger.error("Multi-database scan failed", error=str(e))
+            raise click.ClickException(f"Multi-database scan failed: {str(e)}")
+    
+    asyncio.run(_scan_multi())
 
 
 @main.command()
