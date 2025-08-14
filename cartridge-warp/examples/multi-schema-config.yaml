@@ -1,0 +1,87 @@
+# Multi-Schema Configuration Example
+mode: multi
+
+# Source: MongoDB
+source:
+  type: mongodb
+  connection_string: "mongodb://localhost:27017"
+  database: "multi_tenant_app"
+  
+  change_detection_column: "last_modified"
+  change_detection_strategy: "timestamp"
+  timezone: "UTC"
+
+# Destination: PostgreSQL
+destination:
+  type: postgresql
+  connection_string: "postgresql://user:password@localhost:5432/data_warehouse"
+  database: "data_warehouse"
+  metadata_schema: "cartridge_warp_metadata"
+
+# Multiple schema configurations
+schemas:
+  - name: "tenant_1_data"
+    mode: "stream"
+    default_batch_size: 500
+    default_polling_interval: 3
+    
+    tables:
+      - name: "users"
+        mode: "stream"
+        stream_batch_size: 200
+        deletion_strategy: "soft"
+      - name: "transactions"
+        mode: "stream"
+        stream_batch_size: 1000
+        deletion_strategy: "hard"
+  
+  - name: "tenant_2_data"
+    mode: "batch"
+    default_batch_size: 2000
+    default_polling_interval: 300  # 5 minutes
+    schedule: "*/5 * * * *"  # Every 5 minutes
+    
+    tables:
+      - name: "analytics_events"
+        mode: "batch"
+        full_load_batch_size: 10000
+        write_batch_size: 2000
+  
+  - name: "shared_data"
+    mode: "stream"
+    default_batch_size: 1000
+    default_polling_interval: 5
+    
+    tables:
+      - name: "configurations"
+        mode: "stream"
+        stream_batch_size: 100
+        polling_interval_seconds: 10
+      - name: "feature_flags"
+        mode: "stream"
+        stream_batch_size: 50
+        polling_interval_seconds: 30
+
+# No single schema name for multi mode
+
+# Monitoring configuration
+monitoring:
+  prometheus:
+    enabled: true
+    port: 8080
+    path: "/metrics"
+  log_level: "DEBUG"  # More verbose for multi-schema debugging
+  structured_logging: true
+
+# Error handling configuration
+error_handling:
+  max_retries: 5
+  backoff_factor: 1.5
+  max_backoff_seconds: 600
+  dead_letter_queue: true
+  ignore_type_conversion_errors: true
+  log_conversion_warnings: true
+
+# Runtime settings
+dry_run: false
+full_resync: false

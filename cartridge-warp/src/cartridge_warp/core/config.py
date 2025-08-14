@@ -1,0 +1,187 @@
+"""Configuration management for cartridge-warp."""
+
+from typing import Dict, List, Optional, Union, Literal
+from pathlib import Path
+import yaml
+from pydantic import BaseModel, Field, field_validator
+from pydantic_settings import BaseSettings
+
+
+class SourceConfig(BaseModel):
+    """Source database configuration."""
+    
+    type: Literal["mongodb", "mysql", "postgresql", "bigquery"] = Field(
+        description="Type of source database"
+    )
+    connection_string: str = Field(description="Database connection string")
+    database: Optional[str] = Field(None, description="Database name")
+    
+    # Change detection settings
+    change_detection_column: str = Field(
+        "updated_at", description="Column used for change detection in batch mode"
+    )
+    change_detection_strategy: Literal["timestamp", "log", "trigger"] = Field(
+        "timestamp", description="Strategy for detecting changes"
+    )
+    timezone: str = Field("UTC", description="Timezone for timestamp operations")
+
+
+class DestinationConfig(BaseModel):
+    """Destination database configuration."""
+    
+    type: Literal["postgresql", "mysql", "bigquery"] = Field(
+        description="Type of destination database"
+    )
+    connection_string: str = Field(description="Database connection string")
+    database: Optional[str] = Field(None, description="Database name")
+    
+    # Schema settings
+    metadata_schema: str = Field(
+        "cartridge_warp_metadata", description="Schema for metadata tables"
+    )
+
+
+class TableConfig(BaseModel):
+    """Table-specific configuration."""
+    
+    name: str = Field(description="Table name")
+    mode: Literal["stream", "batch"] = Field("stream", description="Sync mode")
+    
+    # Batch sizes
+    stream_batch_size: int = Field(1000, description="Records per stream batch")
+    write_batch_size: int = Field(500, description="Records per write transaction")
+    full_load_batch_size: int = Field(10000, description="Records per full load batch")
+    
+    # Timing
+    polling_interval_seconds: int = Field(5, description="Polling interval for changes")
+    
+    # Schema evolution
+    enable_schema_evolution: bool = Field(True, description="Allow schema changes")
+    
+    # Deletion handling
+    deletion_strategy: Literal["hard", "soft"] = Field(
+        "hard", description="How to handle deleted records"
+    )
+    soft_delete_column: str = Field(
+        "is_deleted", description="Column name for soft deletes"
+    )
+
+
+class SchemaConfig(BaseModel):
+    """Schema-level configuration."""
+    
+    name: str = Field(description="Schema name")
+    mode: Literal["stream", "batch"] = Field("stream", description="Default sync mode")
+    
+    # Default settings for tables in this schema
+    default_batch_size: int = Field(1000, description="Default batch size")
+    default_polling_interval: int = Field(5, description="Default polling interval")
+    
+    # Table-specific overrides
+    tables: List[TableConfig] = Field(default_factory=list, description="Table configurations")
+    
+    # Schedule for batch mode
+    schedule: Optional[str] = Field(None, description="Cron schedule for batch mode")
+
+
+class PrometheusConfig(BaseModel):
+    """Prometheus monitoring configuration."""
+    
+    enabled: bool = True
+    port: int = 8080
+    path: str = "/metrics"
+
+
+class MonitoringConfig(BaseModel):
+    """Monitoring and observability configuration."""
+    
+    prometheus: PrometheusConfig = PrometheusConfig()
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    structured_logging: bool = True
+
+
+class ErrorHandlingConfig(BaseModel):
+    """Error handling and retry configuration."""
+    
+    max_retries: int = 3
+    backoff_factor: float = 2.0
+    max_backoff_seconds: int = 300
+    dead_letter_queue: bool = True
+    ignore_type_conversion_errors: bool = True
+    log_conversion_warnings: bool = True
+
+
+class WarpConfig(BaseSettings):
+    """Main configuration for cartridge-warp."""
+    
+    # Execution mode
+    mode: Literal["single", "multi"] = "single"
+    
+    # Database configurations
+    source: SourceConfig
+    destination: DestinationConfig
+    
+    # Schema configurations
+    schemas: List[SchemaConfig]
+    
+    # Single schema mode settings
+    single_schema_name: Optional[str] = None
+    
+    # Global settings
+    monitoring: MonitoringConfig = MonitoringConfig()
+    error_handling: ErrorHandlingConfig = ErrorHandlingConfig()
+    
+    # Runtime settings
+    dry_run: bool = False
+    full_resync: bool = False
+    
+    class Config:
+        env_prefix = "CARTRIDGE_WARP_"
+        case_sensitive = False
+    
+    @field_validator("schemas")
+    @classmethod
+    def validate_schemas_not_empty(cls, v):
+        """Ensure at least one schema is configured."""
+        if not v:
+            raise ValueError("At least one schema must be configured")
+        return v
+    
+    @field_validator("single_schema_name")
+    @classmethod
+    def validate_single_schema_name(cls, v, info):
+        """Validate single schema name is provided when in single mode."""
+        if info.data.get("mode") == "single" and not v:
+            raise ValueError("single_schema_name is required when mode is 'single'")
+        return v
+    
+    @classmethod
+    def from_file(cls, config_path: Union[str, Path]) -> "WarpConfig":
+        """Load configuration from YAML file."""
+        config_path = Path(config_path)
+        
+        if not config_path.exists():
+            raise FileNotFoundError(f"Configuration file not found: {config_path}")
+        
+        with open(config_path, "r") as f:
+            config_data = yaml.safe_load(f)
+        
+        return cls(**config_data)
+    
+    def get_schema_config(self, schema_name: str) -> Optional[SchemaConfig]:
+        """Get configuration for a specific schema."""
+        for schema_config in self.schemas:
+            if schema_config.name == schema_name:
+                return schema_config
+        return None
+    
+    def get_table_config(self, schema_name: str, table_name: str) -> Optional[TableConfig]:
+        """Get configuration for a specific table."""
+        schema_config = self.get_schema_config(schema_name)
+        if not schema_config:
+            return None
+        
+        for table_config in schema_config.tables:
+            if table_config.name == table_name:
+                return table_config
+        return None

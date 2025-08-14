@@ -1,0 +1,97 @@
+# Docker Compose for cartridge-warp development and testing
+version: '3.8'
+
+services:
+  # MongoDB source database
+  mongodb:
+    image: mongo:7.0
+    container_name: cartridge-warp-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: ecommerce
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/init-mongodb.js:/docker-entrypoint-initdb.d/init-mongodb.js:ro
+    networks:
+      - cartridge-warp
+
+  # PostgreSQL destination database
+  postgresql:
+    image: postgres:16
+    container_name: cartridge-warp-postgresql
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: cartridge
+      POSTGRES_PASSWORD: cartridge_password
+      POSTGRES_DB: warehouse
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+      - ./scripts/init-postgresql.sql:/docker-entrypoint-initdb.d/init-postgresql.sql:ro
+    networks:
+      - cartridge-warp
+
+  # Prometheus for monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cartridge-warp-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - cartridge-warp
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cartridge-warp-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - cartridge-warp
+
+  # Cartridge-warp application
+  cartridge-warp:
+    build: .
+    container_name: cartridge-warp-app
+    ports:
+      - "8080:8080"
+    environment:
+      CARTRIDGE_WARP_SOURCE__CONNECTION_STRING: "mongodb://admin:password@mongodb:27017"
+      CARTRIDGE_WARP_DESTINATION__CONNECTION_STRING: "postgresql://cartridge:cartridge_password@postgresql:5432/warehouse"
+    volumes:
+      - ./examples:/app/examples:ro
+      - ./logs:/app/logs
+    depends_on:
+      - mongodb
+      - postgresql
+    networks:
+      - cartridge-warp
+    command: ["cartridge-warp", "validate", "--config", "examples/mongodb-to-postgresql-single.yaml"]
+
+volumes:
+  mongodb_data:
+  postgresql_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  cartridge-warp:
+    driver: bridge

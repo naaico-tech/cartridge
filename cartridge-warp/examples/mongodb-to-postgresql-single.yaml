@@ -1,0 +1,79 @@
+# MongoDB to PostgreSQL - Single Schema Mode
+mode: single
+
+# Source: MongoDB
+source:
+  type: mongodb
+  connection_string: "mongodb://localhost:27017"
+  database: "ecommerce"
+  
+  # Change detection settings
+  change_detection_column: "updated_at"
+  change_detection_strategy: "timestamp"
+  timezone: "UTC"
+
+# Destination: PostgreSQL  
+destination:
+  type: postgresql
+  connection_string: "postgresql://user:password@localhost:5432/warehouse"
+  database: "warehouse"
+  metadata_schema: "cartridge_warp_metadata"
+
+# Schema configuration
+schemas:
+  - name: "ecommerce"
+    mode: "stream"
+    default_batch_size: 1000
+    default_polling_interval: 5
+    
+    # Table-specific configurations
+    tables:
+      - name: "products"
+        mode: "stream"
+        stream_batch_size: 500
+        write_batch_size: 250
+        polling_interval_seconds: 2
+        enable_schema_evolution: true
+        deletion_strategy: "soft"
+        soft_delete_column: "is_deleted"
+      
+      - name: "orders"
+        mode: "stream"
+        stream_batch_size: 1000
+        write_batch_size: 500
+        polling_interval_seconds: 5
+        enable_schema_evolution: true
+        deletion_strategy: "hard"
+      
+      - name: "customers"
+        mode: "batch"
+        full_load_batch_size: 5000
+        write_batch_size: 1000
+        polling_interval_seconds: 300  # 5 minutes
+        enable_schema_evolution: true
+        deletion_strategy: "soft"
+
+# Single schema mode setting
+single_schema_name: "ecommerce"
+
+# Monitoring configuration
+monitoring:
+  prometheus:
+    enabled: true
+    port: 8080
+    path: "/metrics"
+  log_level: "INFO"
+  structured_logging: true
+
+# Error handling configuration
+error_handling:
+  max_retries: 3
+  backoff_factor: 2.0
+  max_backoff_seconds: 300
+  dead_letter_queue: true
+  ignore_type_conversion_errors: true
+  log_conversion_warnings: true
+
+# Runtime settings
+dry_run: false
+full_resync: false

@@ -1,0 +1,26 @@
+# Prometheus configuration for cartridge-warp monitoring
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "rules/*.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Cartridge-warp metrics
+  - job_name: 'cartridge-warp'
+    static_configs:
+      - targets: ['cartridge-warp:8080']
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+    
+  # System metrics (if node_exporter is available)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
