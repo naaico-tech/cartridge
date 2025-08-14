@@ -3,6 +3,7 @@
 from typing import Dict, Any
 from cartridge.scanner.base import DatabaseConnector
 from cartridge.scanner.postgresql import PostgreSQLConnector
+from cartridge.scanner.bigquery import BigQueryConnector
 from cartridge.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -110,38 +111,6 @@ class SnowflakeConnector(DatabaseConnector):
     
     def normalize_data_type(self, raw_type):
         raise NotImplementedError("Snowflake connector not yet implemented")
-
-
-class BigQueryConnector(DatabaseConnector):
-    """BigQuery database connector (placeholder)."""
-    
-    async def connect(self) -> None:
-        raise NotImplementedError("BigQuery connector not yet implemented")
-    
-    async def disconnect(self) -> None:
-        raise NotImplementedError("BigQuery connector not yet implemented")
-    
-    async def test_connection(self) -> Dict[str, Any]:
-        return {
-            "status": "failed",
-            "message": "BigQuery connector not yet implemented",
-            "error": "NotImplementedError"
-        }
-    
-    async def get_database_info(self):
-        raise NotImplementedError("BigQuery connector not yet implemented")
-    
-    async def get_tables(self, schema=None):
-        raise NotImplementedError("BigQuery connector not yet implemented")
-    
-    async def get_table_info(self, table_name, schema=None):
-        raise NotImplementedError("BigQuery connector not yet implemented")
-    
-    async def get_sample_data(self, table_name, schema=None, limit=100):
-        raise NotImplementedError("BigQuery connector not yet implemented")
-    
-    def normalize_data_type(self, raw_type):
-        raise NotImplementedError("BigQuery connector not yet implemented")
 
 
 class RedshiftConnector(DatabaseConnector):
