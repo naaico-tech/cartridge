@@ -1,0 +1,3490 @@
+{
+  "database_type": "postgresql",
+  "schemas": [
+    "ecommerce",
+    "analytics"
+  ],
+  "connection_string": "postgresql://***:***@localhost:5432/***",
+  "scan_timestamp": "2025-08-13T09:26:54Z",
+  "total_schemas": 2,
+  "total_tables": 15,
+  "schemas_data": [
+    {
+      "schema": "ecommerce",
+      "scan_timestamp": "2025-08-13T09:26:54Z",
+      "tables": [
+        {
+          "name": "cart_items",
+          "schema": "ecommerce",
+          "type": "table",
+          "row_count": 0,
+          "columns": [
+            {
+              "name": "cart_item_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "user_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "product_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "variant_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "quantity",
+              "data_type": "integer",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": "1",
+              "comment": null
+            },
+            {
+              "name": "added_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            },
+            {
+              "name": "updated_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16481_16635_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16635_5_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "cart_items_product_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "product_id"
+              ],
+              "referenced_table": "products",
+              "referenced_columns": [
+                "product_id"
+              ]
+            },
+            {
+              "name": "cart_items_user_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "user_id"
+              ],
+              "referenced_table": "users",
+              "referenced_columns": [
+                "user_id"
+              ]
+            },
+            {
+              "name": "cart_items_variant_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "variant_id"
+              ],
+              "referenced_table": "product_variants",
+              "referenced_columns": [
+                "variant_id"
+              ]
+            },
+            {
+              "name": "cart_items_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "cart_item_id"
+              ],
+              "referenced_table": "cart_items",
+              "referenced_columns": [
+                "cart_item_id"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "cart_items_pkey",
+              "columns": [
+                "cart_item_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            },
+            {
+              "name": "idx_cart_items_user",
+              "columns": [
+                "user_id"
+              ],
+              "is_unique": false,
+              "is_primary": false
+            }
+          ],
+          "sample_data": []
+        },
+        {
+          "name": "categories",
+          "schema": "ecommerce",
+          "type": "table",
+          "row_count": 10,
+          "columns": [
+            {
+              "name": "category_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "name",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "description",
+              "data_type": "text",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "parent_category_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "image_url",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "is_active",
+              "data_type": "boolean",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "true",
+              "comment": null
+            },
+            {
+              "name": "created_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            },
+            {
+              "name": "updated_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16481_16513_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16513_2_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "categories_parent_category_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "parent_category_id"
+              ],
+              "referenced_table": "categories",
+              "referenced_columns": [
+                "category_id"
+              ]
+            },
+            {
+              "name": "categories_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "category_id"
+              ],
+              "referenced_table": "categories",
+              "referenced_columns": [
+                "category_id"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "categories_pkey",
+              "columns": [
+                "category_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            },
+            {
+              "name": "idx_categories_search",
+              "columns": [
+                null
+              ],
+              "is_unique": false,
+              "is_primary": false
+            }
+          ],
+          "sample_data": [
+            {
+              "category_id": "660e8400-e29b-41d4-a716-446655440001",
+              "name": "Electronics",
+              "description": "Electronic devices and gadgets",
+              "parent_category_id": null,
+              "image_url": "https://example.com/images/electronics.jpg",
+              "is_active": true,
+              "created_at": "2025-08-03T09:27:46.473575",
+              "updated_at": "2025-08-03T09:27:46.473575"
+            },
+            {
+              "category_id": "660e8400-e29b-41d4-a716-446655440002",
+              "name": "Computers & Laptops",
+              "description": "Desktop computers, laptops, and accessories",
+              "parent_category_id": "660e8400-e29b-41d4-a716-446655440001",
+              "image_url": "https://example.com/images/computers.jpg",
+              "is_active": true,
+              "created_at": "2025-08-03T09:27:46.473575",
+              "updated_at": "2025-08-03T09:27:46.473575"
+            },
+            {
+              "category_id": "660e8400-e29b-41d4-a716-446655440003",
+              "name": "Smartphones",
+              "description": "Mobile phones and accessories",
+              "parent_category_id": "660e8400-e29b-41d4-a716-446655440001",
+              "image_url": "https://example.com/images/smartphones.jpg",
+              "is_active": true,
+              "created_at": "2025-08-03T09:27:46.473575",
+              "updated_at": "2025-08-03T09:27:46.473575"
+            },
+            {
+              "category_id": "660e8400-e29b-41d4-a716-446655440004",
+              "name": "Clothing",
+              "description": "Fashion and apparel",
+              "parent_category_id": null,
+              "image_url": "https://example.com/images/clothing.jpg",
+              "is_active": true,
+              "created_at": "2025-08-03T09:27:46.473575",
+              "updated_at": "2025-08-03T09:27:46.473575"
+            },
+            {
+              "category_id": "660e8400-e29b-41d4-a716-446655440005",
+              "name": "Men's Clothing",
+              "description": "Men's fashion and apparel",
+              "parent_category_id": "660e8400-e29b-41d4-a716-446655440004",
+              "image_url": "https://example.com/images/mens-clothing.jpg",
+              "is_active": true,
+              "created_at": "2025-08-03T09:27:46.473575",
+              "updated_at": "2025-08-03T09:27:46.473575"
+            },
+            {
+              "category_id": "660e8400-e29b-41d4-a716-446655440006",
+              "name": "Women's Clothing",
+              "description": "Women's fashion and apparel",
+              "parent_category_id": "660e8400-e29b-41d4-a716-446655440004",
+              "image_url": "https://example.com/images/womens-clothing.jpg",
+              "is_active": true,
+              "created_at": "2025-08-03T09:27:46.473575",
+              "updated_at": "2025-08-03T09:27:46.473575"
+            },
+            {
+              "category_id": "660e8400-e29b-41d4-a716-446655440007",
+              "name": "Home & Garden",
+              "description": "Home improvement and garden supplies",
+              "parent_category_id": null,
+              "image_url": "https://example.com/images/home-garden.jpg",
+              "is_active": true,
+              "created_at": "2025-08-03T09:27:46.473575",
+              "updated_at": "2025-08-03T09:27:46.473575"
+            },
+            {
+              "category_id": "660e8400-e29b-41d4-a716-446655440008",
+              "name": "Books",
+              "description": "Books and educational materials",
+              "parent_category_id": null,
+              "image_url": "https://example.com/images/books.jpg",
+              "is_active": true,
+              "created_at": "2025-08-03T09:27:46.473575",
+              "updated_at": "2025-08-03T09:27:46.473575"
+            },
+            {
+              "category_id": "660e8400-e29b-41d4-a716-446655440009",
+              "name": "Sports & Outdoors",
+              "description": "Sports equipment and outdoor gear",
+              "parent_category_id": null,
+              "image_url": "https://example.com/images/sports.jpg",
+              "is_active": true,
+              "created_at": "2025-08-03T09:27:46.473575",
+              "updated_at": "2025-08-03T09:27:46.473575"
+            }
+          ]
+        },
+        {
+          "name": "coupon_usage",
+          "schema": "ecommerce",
+          "type": "table",
+          "row_count": 0,
+          "columns": [
+            {
+              "name": "usage_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "coupon_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "user_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "order_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "discount_amount",
+              "data_type": "numeric",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "used_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16481_16694_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16694_5_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "coupon_usage_coupon_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "coupon_id"
+              ],
+              "referenced_table": "coupons",
+              "referenced_columns": [
+                "coupon_id"
+              ]
+            },
+            {
+              "name": "coupon_usage_order_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "order_id"
+              ],
+              "referenced_table": "orders",
+              "referenced_columns": [
+                "order_id"
+              ]
+            },
+            {
+              "name": "coupon_usage_user_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "user_id"
+              ],
+              "referenced_table": "users",
+              "referenced_columns": [
+                "user_id"
+              ]
+            },
+            {
+              "name": "coupon_usage_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "usage_id"
+              ],
+              "referenced_table": "coupon_usage",
+              "referenced_columns": [
+                "usage_id"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "coupon_usage_pkey",
+              "columns": [
+                "usage_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            }
+          ],
+          "sample_data": []
+        },
+        {
+          "name": "coupons",
+          "schema": "ecommerce",
+          "type": "table",
+          "row_count": 4,
+          "columns": [
+            {
+              "name": "coupon_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "code",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "description",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "discount_type",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "discount_value",
+              "data_type": "numeric",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "minimum_order_amount",
+              "data_type": "numeric",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "0",
+              "comment": null
+            },
+            {
+              "name": "maximum_discount_amount",
+              "data_type": "numeric",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "usage_limit",
+              "data_type": "integer",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "used_count",
+              "data_type": "integer",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "0",
+              "comment": null
+            },
+            {
+              "name": "valid_from",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "valid_until",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "is_active",
+              "data_type": "boolean",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "true",
+              "comment": null
+            },
+            {
+              "name": "created_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16481_16682_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16682_2_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16682_4_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16682_5_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "coupons_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "coupon_id"
+              ],
+              "referenced_table": "coupons",
+              "referenced_columns": [
+                "coupon_id"
+              ]
+            },
+            {
+              "name": "coupons_code_key",
+              "type": "UNIQUE",
+              "columns": [
+                "code"
+              ],
+              "referenced_table": "coupons",
+              "referenced_columns": [
+                "code"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "coupons_code_key",
+              "columns": [
+                "code"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            },
+            {
+              "name": "coupons_pkey",
+              "columns": [
+                "coupon_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            },
+            {
+              "name": "idx_coupons_active",
+              "columns": [
+                "is_active"
+              ],
+              "is_unique": false,
+              "is_primary": false
+            },
+            {
+              "name": "idx_coupons_code",
+              "columns": [
+                "code"
+              ],
+              "is_unique": false,
+              "is_primary": false
+            }
+          ],
+          "sample_data": [
+            {
+              "coupon_id": "990e8400-e29b-41d4-a716-446655440001",
+              "code": "WELCOME10",
+              "description": "Welcome discount for new customers",
+              "discount_type": "percentage",
+              "discount_value": "10.00",
+              "minimum_order_amount": "50.00",
+              "maximum_discount_amount": "100.00",
+              "usage_limit": 1000,
+              "used_count": 0,
+              "valid_from": "2024-01-01T00:00:00",
+              "valid_until": "2024-12-31T23:59:59",
+              "is_active": true,
+              "created_at": "2025-08-03T09:29:40.682866"
+            },
+            {
+              "coupon_id": "990e8400-e29b-41d4-a716-446655440002",
+              "code": "SAVE20",
+              "description": "20% off on electronics",
+              "discount_type": "percentage",
+              "discount_value": "20.00",
+              "minimum_order_amount": "100.00",
+              "maximum_discount_amount": "200.00",
+              "usage_limit": 500,
+              "used_count": 0,
+              "valid_from": "2024-01-01T00:00:00",
+              "valid_until": "2024-06-30T23:59:59",
+              "is_active": true,
+              "created_at": "2025-08-03T09:29:40.682866"
+            },
+            {
+              "coupon_id": "990e8400-e29b-41d4-a716-446655440003",
+              "code": "FREESHIP",
+              "description": "Free shipping on orders over $50",
+              "discount_type": "fixed_amount",
+              "discount_value": "9.99",
+              "minimum_order_amount": "50.00",
+              "maximum_discount_amount": "9.99",
+              "usage_limit": 1000,
+              "used_count": 0,
+              "valid_from": "2024-01-01T00:00:00",
+              "valid_until": "2024-12-31T23:59:59",
+              "is_active": true,
+              "created_at": "2025-08-03T09:29:40.682866"
+            },
+            {
+              "coupon_id": "990e8400-e29b-41d4-a716-446655440004",
+              "code": "FLASH25",
+              "description": "Flash sale - 25% off everything",
+              "discount_type": "percentage",
+              "discount_value": "25.00",
+              "minimum_order_amount": "25.00",
+              "maximum_discount_amount": "250.00",
+              "usage_limit": 200,
+              "used_count": 0,
+              "valid_from": "2024-03-01T00:00:00",
+              "valid_until": "2024-03-15T23:59:59",
+              "is_active": true,
+              "created_at": "2025-08-03T09:29:40.682866"
+            }
+          ]
+        },
+        {
+          "name": "order_items",
+          "schema": "ecommerce",
+          "type": "table",
+          "row_count": 8,
+          "columns": [
+            {
+              "name": "order_item_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "order_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "product_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "variant_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "quantity",
+              "data_type": "integer",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "unit_price",
+              "data_type": "numeric",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "total_price",
+              "data_type": "numeric",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "created_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16481_16613_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16613_5_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16613_6_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16613_7_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "order_items_order_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "order_id"
+              ],
+              "referenced_table": "orders",
+              "referenced_columns": [
+                "order_id"
+              ]
+            },
+            {
+              "name": "order_items_product_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "product_id"
+              ],
+              "referenced_table": "products",
+              "referenced_columns": [
+                "product_id"
+              ]
+            },
+            {
+              "name": "order_items_variant_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "variant_id"
+              ],
+              "referenced_table": "product_variants",
+              "referenced_columns": [
+                "variant_id"
+              ]
+            },
+            {
+              "name": "order_items_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "order_item_id"
+              ],
+              "referenced_table": "order_items",
+              "referenced_columns": [
+                "order_item_id"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_order_items_order",
+              "columns": [
+                "order_id"
+              ],
+              "is_unique": false,
+              "is_primary": false
+            },
+            {
+              "name": "order_items_pkey",
+              "columns": [
+                "order_item_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            }
+          ],
+          "sample_data": [
+            {
+              "order_item_id": "c1825575-67c9-4cf9-804b-60fd0dfaf789",
+              "order_id": "880e8400-e29b-41d4-a716-446655440001",
+              "product_id": "770e8400-e29b-41d4-a716-446655440001",
+              "variant_id": null,
+              "quantity": 1,
+              "unit_price": "1199.99",
+              "total_price": "1199.99",
+              "created_at": "2025-08-03T09:29:40.677951"
+            },
+            {
+              "order_item_id": "ad61aea8-e971-48a8-8e52-d9cd073ee308",
+              "order_id": "880e8400-e29b-41d4-a716-446655440001",
+              "product_id": "770e8400-e29b-41d4-a716-446655440005",
+              "variant_id": null,
+              "quantity": 1,
+              "unit_price": "349.99",
+              "total_price": "349.99",
+              "created_at": "2025-08-03T09:29:40.677951"
+            },
+            {
+              "order_item_id": "5fe4d895-8df9-4a19-8f20-8ef7328a1114",
+              "order_id": "880e8400-e29b-41d4-a716-446655440002",
+              "product_id": "770e8400-e29b-41d4-a716-446655440006",
+              "variant_id": null,
+              "quantity": 2,
+              "unit_price": "19.99",
+              "total_price": "39.98",
+              "created_at": "2025-08-03T09:29:40.677951"
+            },
+            {
+              "order_item_id": "f404ee7c-b088-4bc4-8852-11a2e1c48d77",
+              "order_id": "880e8400-e29b-41d4-a716-446655440002",
+              "product_id": "770e8400-e29b-41d4-a716-446655440008",
+              "variant_id": null,
+              "quantity": 1,
+              "unit_price": "79.99",
+              "total_price": "79.99",
+              "created_at": "2025-08-03T09:29:40.677951"
+            },
+            {
+              "order_item_id": "871ba959-7386-4220-a274-80875bf7ea06",
+              "order_id": "880e8400-e29b-41d4-a716-446655440002",
+              "product_id": "770e8400-e29b-41d4-a716-446655440015",
+              "variant_id": null,
+              "quantity": 1,
+              "unit_price": "39.99",
+              "total_price": "39.99",
+              "created_at": "2025-08-03T09:29:40.677951"
+            },
+            {
+              "order_item_id": "b970ce8c-db53-472b-8582-4b245c736dc8",
+              "order_id": "880e8400-e29b-41d4-a716-446655440003",
+              "product_id": "770e8400-e29b-41d4-a716-446655440003",
+              "variant_id": null,
+              "quantity": 1,
+              "unit_price": "899.99",
+              "total_price": "899.99",
+              "created_at": "2025-08-03T09:29:40.677951"
+            },
+            {
+              "order_item_id": "d1dc58d2-be1d-4863-bf99-9ed0d33e18c4",
+              "order_id": "880e8400-e29b-41d4-a716-446655440004",
+              "product_id": "770e8400-e29b-41d4-a716-446655440012",
+              "variant_id": null,
+              "quantity": 2,
+              "unit_price": "39.99",
+              "total_price": "79.98",
+              "created_at": "2025-08-03T09:29:40.677951"
+            },
+            {
+              "order_item_id": "06929bd9-70b1-4629-8de5-9f1d7a78e230",
+              "order_id": "880e8400-e29b-41d4-a716-446655440005",
+              "product_id": "770e8400-e29b-41d4-a716-446655440010",
+              "variant_id": null,
+              "quantity": 1,
+              "unit_price": "349.99",
+              "total_price": "349.99",
+              "created_at": "2025-08-03T09:29:40.677951"
+            }
+          ]
+        },
+        {
+          "name": "orders",
+          "schema": "ecommerce",
+          "type": "table",
+          "row_count": 5,
+          "columns": [
+            {
+              "name": "order_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "user_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "order_number",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "status",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "'pending'::character varying",
+              "comment": null
+            },
+            {
+              "name": "total_amount",
+              "data_type": "numeric",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "tax_amount",
+              "data_type": "numeric",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "0",
+              "comment": null
+            },
+            {
+              "name": "shipping_amount",
+              "data_type": "numeric",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "0",
+              "comment": null
+            },
+            {
+              "name": "discount_amount",
+              "data_type": "numeric",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "0",
+              "comment": null
+            },
+            {
+              "name": "shipping_address_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "billing_address_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "payment_method",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "payment_status",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "'pending'::character varying",
+              "comment": null
+            },
+            {
+              "name": "notes",
+              "data_type": "text",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "created_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            },
+            {
+              "name": "updated_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16481_16581_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16581_3_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16581_5_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "orders_billing_address_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "billing_address_id"
+              ],
+              "referenced_table": "user_addresses",
+              "referenced_columns": [
+                "address_id"
+              ]
+            },
+            {
+              "name": "orders_shipping_address_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "shipping_address_id"
+              ],
+              "referenced_table": "user_addresses",
+              "referenced_columns": [
+                "address_id"
+              ]
+            },
+            {
+              "name": "orders_user_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "user_id"
+              ],
+              "referenced_table": "users",
+              "referenced_columns": [
+                "user_id"
+              ]
+            },
+            {
+              "name": "orders_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "order_id"
+              ],
+              "referenced_table": "orders",
+              "referenced_columns": [
+                "order_id"
+              ]
+            },
+            {
+              "name": "orders_order_number_key",
+              "type": "UNIQUE",
+              "columns": [
+                "order_number"
+              ],
+              "referenced_table": "orders",
+              "referenced_columns": [
+                "order_number"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_orders_status",
+              "columns": [
+                "status"
+              ],
+              "is_unique": false,
+              "is_primary": false
+            },
+            {
+              "name": "idx_orders_user",
+              "columns": [
+                "user_id"
+              ],
+              "is_unique": false,
+              "is_primary": false
+            },
+            {
+              "name": "orders_order_number_key",
+              "columns": [
+                "order_number"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            },
+            {
+              "name": "orders_pkey",
+              "columns": [
+                "order_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            }
+          ],
+          "sample_data": [
+            {
+              "order_id": "880e8400-e29b-41d4-a716-446655440001",
+              "user_id": "550e8400-e29b-41d4-a716-446655440001",
+              "order_number": "ORD-2024-001",
+              "status": "delivered",
+              "total_amount": "1329.98",
+              "tax_amount": "99.99",
+              "shipping_amount": "29.99",
+              "discount_amount": "0.00",
+              "shipping_address_id": null,
+              "billing_address_id": null,
+              "payment_method": "credit_card",
+              "payment_status": "paid",
+              "notes": "Please deliver before 5 PM",
+              "created_at": "2025-08-03T09:29:40.675049",
+              "updated_at": "2025-08-03T09:29:40.675049"
+            },
+            {
+              "order_id": "880e8400-e29b-41d4-a716-446655440002",
+              "user_id": "550e8400-e29b-41d4-a716-446655440002",
+              "order_number": "ORD-2024-002",
+              "status": "shipped",
+              "total_amount": "149.97",
+              "tax_amount": "12.99",
+              "shipping_amount": "9.99",
+              "discount_amount": "20.00",
+              "shipping_address_id": null,
+              "billing_address_id": null,
+              "payment_method": "paypal",
+              "payment_status": "paid",
+              "notes": null,
+              "created_at": "2025-08-03T09:29:40.675049",
+              "updated_at": "2025-08-03T09:29:40.675049"
+            },
+            {
+              "order_id": "880e8400-e29b-41d4-a716-446655440003",
+              "user_id": "550e8400-e29b-41d4-a716-446655440003",
+              "order_number": "ORD-2024-003",
+              "status": "processing",
+              "total_amount": "499.98",
+              "tax_amount": "37.99",
+              "shipping_amount": "19.99",
+              "discount_amount": "0.00",
+              "shipping_address_id": null,
+              "billing_address_id": null,
+              "payment_method": "credit_card",
+              "payment_status": "paid",
+              "notes": null,
+              "created_at": "2025-08-03T09:29:40.675049",
+              "updated_at": "2025-08-03T09:29:40.675049"
+            },
+            {
+              "order_id": "880e8400-e29b-41d4-a716-446655440004",
+              "user_id": "550e8400-e29b-41d4-a716-446655440001",
+              "order_number": "ORD-2024-004",
+              "status": "pending",
+              "total_amount": "89.97",
+              "tax_amount": "6.99",
+              "shipping_amount": "9.99",
+              "discount_amount": "0.00",
+              "shipping_address_id": null,
+              "billing_address_id": null,
+              "payment_method": "credit_card",
+              "payment_status": "pending",
+              "notes": null,
+              "created_at": "2025-08-03T09:29:40.675049",
+              "updated_at": "2025-08-03T09:29:40.675049"
+            },
+            {
+              "order_id": "880e8400-e29b-41d4-a716-446655440005",
+              "user_id": "550e8400-e29b-41d4-a716-446655440004",
+              "order_number": "ORD-2024-005",
+              "status": "confirmed",
+              "total_amount": "399.98",
+              "tax_amount": "29.99",
+              "shipping_amount": "19.99",
+              "discount_amount": "50.00",
+              "shipping_address_id": null,
+              "billing_address_id": null,
+              "payment_method": "paypal",
+              "payment_status": "paid",
+              "notes": "Gift wrapped please",
+              "created_at": "2025-08-03T09:29:40.675049",
+              "updated_at": "2025-08-03T09:29:40.675049"
+            }
+          ]
+        },
+        {
+          "name": "product_images",
+          "schema": "ecommerce",
+          "type": "table",
+          "row_count": 0,
+          "columns": [
+            {
+              "name": "image_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "product_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "image_url",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "alt_text",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "is_primary",
+              "data_type": "boolean",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "false",
+              "comment": null
+            },
+            {
+              "name": "sort_order",
+              "data_type": "integer",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "0",
+              "comment": null
+            },
+            {
+              "name": "created_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16481_16550_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16550_3_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "product_images_product_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "product_id"
+              ],
+              "referenced_table": "products",
+              "referenced_columns": [
+                "product_id"
+              ]
+            },
+            {
+              "name": "product_images_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "image_id"
+              ],
+              "referenced_table": "product_images",
+              "referenced_columns": [
+                "image_id"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "product_images_pkey",
+              "columns": [
+                "image_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            }
+          ],
+          "sample_data": []
+        },
+        {
+          "name": "product_reviews",
+          "schema": "ecommerce",
+          "type": "table",
+          "row_count": 5,
+          "columns": [
+            {
+              "name": "review_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "product_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "user_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "rating",
+              "data_type": "integer",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "title",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "review_text",
+              "data_type": "text",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "is_verified_purchase",
+              "data_type": "boolean",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "false",
+              "comment": null
+            },
+            {
+              "name": "is_approved",
+              "data_type": "boolean",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "true",
+              "comment": null
+            },
+            {
+              "name": "created_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            },
+            {
+              "name": "updated_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16481_16659_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16659_4_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "product_reviews_rating_check",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": "product_reviews",
+              "referenced_columns": [
+                "rating"
+              ]
+            },
+            {
+              "name": "product_reviews_product_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "product_id"
+              ],
+              "referenced_table": "products",
+              "referenced_columns": [
+                "product_id"
+              ]
+            },
+            {
+              "name": "product_reviews_user_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "user_id"
+              ],
+              "referenced_table": "users",
+              "referenced_columns": [
+                "user_id"
+              ]
+            },
+            {
+              "name": "product_reviews_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "review_id"
+              ],
+              "referenced_table": "product_reviews",
+              "referenced_columns": [
+                "review_id"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_reviews_product",
+              "columns": [
+                "product_id"
+              ],
+              "is_unique": false,
+              "is_primary": false
+            },
+            {
+              "name": "product_reviews_pkey",
+              "columns": [
+                "review_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            }
+          ],
+          "sample_data": [
+            {
+              "review_id": "2aadf996-cd6f-4947-97b3-aa9da7caba6c",
+              "product_id": "770e8400-e29b-41d4-a716-446655440001",
+              "user_id": "550e8400-e29b-41d4-a716-446655440001",
+              "rating": 5,
+              "title": "Excellent laptop!",
+              "review_text": "This MacBook Pro is amazing. Fast, reliable, and the battery life is incredible.",
+              "is_verified_purchase": true,
+              "is_approved": true,
+              "created_at": "2025-08-03T09:29:40.680624",
+              "updated_at": "2025-08-03T09:29:40.680624"
+            },
+            {
+              "review_id": "4a34c11a-6315-46f5-a846-038cd1c9b562",
+              "product_id": "770e8400-e29b-41d4-a716-446655440001",
+              "user_id": "550e8400-e29b-41d4-a716-446655440002",
+              "rating": 4,
+              "title": "Great performance",
+              "review_text": "Very good laptop for development work. Only giving 4 stars because of the price.",
+              "is_verified_purchase": true,
+              "is_approved": true,
+              "created_at": "2025-08-03T09:29:40.680624",
+              "updated_at": "2025-08-03T09:29:40.680624"
+            },
+            {
+              "review_id": "16088aaf-9ea2-44c6-bfe1-0ef26cd24bf9",
+              "product_id": "770e8400-e29b-41d4-a716-446655440003",
+              "user_id": "550e8400-e29b-41d4-a716-446655440003",
+              "rating": 5,
+              "title": "Best iPhone ever",
+              "review_text": "The camera quality is outstanding and the performance is lightning fast.",
+              "is_verified_purchase": true,
+              "is_approved": true,
+              "created_at": "2025-08-03T09:29:40.680624",
+              "updated_at": "2025-08-03T09:29:40.680624"
+            },
+            {
+              "review_id": "f610dcbe-805e-43b1-976a-b6142b865c67",
+              "product_id": "770e8400-e29b-41d4-a716-446655440007",
+              "user_id": "550e8400-e29b-41d4-a716-446655440004",
+              "rating": 4,
+              "title": "Beautiful dress",
+              "review_text": "Perfect for summer events. The fit is great and the material is comfortable.",
+              "is_verified_purchase": true,
+              "is_approved": true,
+              "created_at": "2025-08-03T09:29:40.680624",
+              "updated_at": "2025-08-03T09:29:40.680624"
+            },
+            {
+              "review_id": "81c1811a-c832-456e-91fd-7ba243176ee0",
+              "product_id": "770e8400-e29b-41d4-a716-446655440010",
+              "user_id": "550e8400-e29b-41d4-a716-446655440005",
+              "rating": 5,
+              "title": "Professional quality",
+              "review_text": "This mixer is worth every penny. Makes baking so much easier!",
+              "is_verified_purchase": true,
+              "is_approved": true,
+              "created_at": "2025-08-03T09:29:40.680624",
+              "updated_at": "2025-08-03T09:29:40.680624"
+            }
+          ]
+        },
+        {
+          "name": "product_variants",
+          "schema": "ecommerce",
+          "type": "table",
+          "row_count": 0,
+          "columns": [
+            {
+              "name": "variant_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "product_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "variant_name",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "variant_type",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "price_adjustment",
+              "data_type": "numeric",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "0",
+              "comment": null
+            },
+            {
+              "name": "stock_quantity",
+              "data_type": "integer",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "0",
+              "comment": null
+            },
+            {
+              "name": "sku",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "is_active",
+              "data_type": "boolean",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "true",
+              "comment": null
+            },
+            {
+              "name": "created_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16481_16566_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16566_3_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16566_4_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "product_variants_product_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "product_id"
+              ],
+              "referenced_table": "products",
+              "referenced_columns": [
+                "product_id"
+              ]
+            },
+            {
+              "name": "product_variants_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "variant_id"
+              ],
+              "referenced_table": "product_variants",
+              "referenced_columns": [
+                "variant_id"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "product_variants_pkey",
+              "columns": [
+                "variant_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            }
+          ],
+          "sample_data": []
+        },
+        {
+          "name": "products",
+          "schema": "ecommerce",
+          "type": "table",
+          "row_count": 16,
+          "columns": [
+            {
+              "name": "product_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "name",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "description",
+              "data_type": "text",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "sku",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "category_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "price",
+              "data_type": "numeric",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "sale_price",
+              "data_type": "numeric",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "cost_price",
+              "data_type": "numeric",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "weight",
+              "data_type": "numeric",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "dimensions",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "stock_quantity",
+              "data_type": "integer",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "0",
+              "comment": null
+            },
+            {
+              "name": "min_stock_level",
+              "data_type": "integer",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "5",
+              "comment": null
+            },
+            {
+              "name": "is_active",
+              "data_type": "boolean",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "true",
+              "comment": null
+            },
+            {
+              "name": "is_featured",
+              "data_type": "boolean",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "false",
+              "comment": null
+            },
+            {
+              "name": "created_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            },
+            {
+              "name": "updated_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16481_16529_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16529_2_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16529_4_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16529_6_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "products_category_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "category_id"
+              ],
+              "referenced_table": "categories",
+              "referenced_columns": [
+                "category_id"
+              ]
+            },
+            {
+              "name": "products_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "product_id"
+              ],
+              "referenced_table": "products",
+              "referenced_columns": [
+                "product_id"
+              ]
+            },
+            {
+              "name": "products_sku_key",
+              "type": "UNIQUE",
+              "columns": [
+                "sku"
+              ],
+              "referenced_table": "products",
+              "referenced_columns": [
+                "sku"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_products_active",
+              "columns": [
+                "is_active"
+              ],
+              "is_unique": false,
+              "is_primary": false
+            },
+            {
+              "name": "idx_products_category",
+              "columns": [
+                "category_id"
+              ],
+              "is_unique": false,
+              "is_primary": false
+            },
+            {
+              "name": "idx_products_search",
+              "columns": [
+                null
+              ],
+              "is_unique": false,
+              "is_primary": false
+            },
+            {
+              "name": "products_pkey",
+              "columns": [
+                "product_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            },
+            {
+              "name": "products_sku_key",
+              "columns": [
+                "sku"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            }
+          ],
+          "sample_data": [
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440001",
+              "name": "MacBook Pro 13-inch",
+              "description": "Apple MacBook Pro with M2 chip, 8GB RAM, 256GB SSD",
+              "sku": "MBP-13-M2-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440002",
+              "price": "1299.99",
+              "sale_price": "1199.99",
+              "cost_price": "900.00",
+              "weight": "1.40",
+              "dimensions": "30.4x21.2x1.6",
+              "stock_quantity": 25,
+              "min_stock_level": 5,
+              "is_active": true,
+              "is_featured": true,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            },
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440002",
+              "name": "Dell XPS 15 Laptop",
+              "description": "Dell XPS 15 with Intel i7, 16GB RAM, 512GB SSD",
+              "sku": "DLL-XPS-15-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440002",
+              "price": "1499.99",
+              "sale_price": null,
+              "cost_price": "1100.00",
+              "weight": "2.00",
+              "dimensions": "35.7x23.5x1.8",
+              "stock_quantity": 15,
+              "min_stock_level": 3,
+              "is_active": true,
+              "is_featured": false,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            },
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440003",
+              "name": "iPhone 15 Pro",
+              "description": "Apple iPhone 15 Pro with A17 Pro chip, 128GB storage",
+              "sku": "IPH-15-PRO-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440003",
+              "price": "999.99",
+              "sale_price": "899.99",
+              "cost_price": "650.00",
+              "weight": "0.19",
+              "dimensions": "14.7x7.1x0.8",
+              "stock_quantity": 50,
+              "min_stock_level": 10,
+              "is_active": true,
+              "is_featured": true,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            },
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440004",
+              "name": "Samsung Galaxy S24",
+              "description": "Samsung Galaxy S24 with Snapdragon 8 Gen 3, 256GB",
+              "sku": "SMS-GS24-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440003",
+              "price": "899.99",
+              "sale_price": null,
+              "cost_price": "600.00",
+              "weight": "0.17",
+              "dimensions": "14.7x7.0x0.8",
+              "stock_quantity": 40,
+              "min_stock_level": 8,
+              "is_active": true,
+              "is_featured": false,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            },
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440005",
+              "name": "Sony WH-1000XM5 Headphones",
+              "description": "Wireless noise-canceling headphones with 30-hour battery",
+              "sku": "SNY-WH1000XM5-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440001",
+              "price": "399.99",
+              "sale_price": "349.99",
+              "cost_price": "250.00",
+              "weight": "0.25",
+              "dimensions": "26.5x19.5x7.5",
+              "stock_quantity": 30,
+              "min_stock_level": 5,
+              "is_active": true,
+              "is_featured": false,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            },
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440006",
+              "name": "Men's Classic Fit T-Shirt",
+              "description": "100% cotton classic fit t-shirt in various colors",
+              "sku": "MENS-TS-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440005",
+              "price": "24.99",
+              "sale_price": "19.99",
+              "cost_price": "8.00",
+              "weight": "0.15",
+              "dimensions": "28x20x2",
+              "stock_quantity": 100,
+              "min_stock_level": 20,
+              "is_active": true,
+              "is_featured": false,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            },
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440007",
+              "name": "Women's Summer Dress",
+              "description": "Floral print summer dress with adjustable straps",
+              "sku": "WOMENS-DR-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440006",
+              "price": "59.99",
+              "sale_price": "49.99",
+              "cost_price": "25.00",
+              "weight": "0.30",
+              "dimensions": "32x24x3",
+              "stock_quantity": 75,
+              "min_stock_level": 15,
+              "is_active": true,
+              "is_featured": true,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            },
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440008",
+              "name": "Men's Slim Fit Jeans",
+              "description": "Dark wash slim fit jeans with stretch denim",
+              "sku": "MENS-JEANS-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440005",
+              "price": "79.99",
+              "sale_price": null,
+              "cost_price": "35.00",
+              "weight": "0.40",
+              "dimensions": "34x32x2",
+              "stock_quantity": 60,
+              "min_stock_level": 12,
+              "is_active": true,
+              "is_featured": false,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            },
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440009",
+              "name": "Women's Blouse",
+              "description": "Silk blend blouse with button-down collar",
+              "sku": "WOMENS-BL-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440006",
+              "price": "89.99",
+              "sale_price": "69.99",
+              "cost_price": "40.00",
+              "weight": "0.20",
+              "dimensions": "30x22x2",
+              "stock_quantity": 45,
+              "min_stock_level": 10,
+              "is_active": true,
+              "is_featured": false,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            },
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440010",
+              "name": "KitchenAid Stand Mixer",
+              "description": "Professional 5-quart stand mixer in red",
+              "sku": "KIT-MIXER-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440007",
+              "price": "399.99",
+              "sale_price": "349.99",
+              "cost_price": "200.00",
+              "weight": "5.50",
+              "dimensions": "35x20x30",
+              "stock_quantity": 20,
+              "min_stock_level": 5,
+              "is_active": true,
+              "is_featured": true,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            },
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440011",
+              "name": "Garden Tool Set",
+              "description": "Complete garden tool set with carrying case",
+              "sku": "GRD-TOOLS-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440007",
+              "price": "89.99",
+              "sale_price": null,
+              "cost_price": "45.00",
+              "weight": "2.50",
+              "dimensions": "50x30x15",
+              "stock_quantity": 35,
+              "min_stock_level": 8,
+              "is_active": true,
+              "is_featured": false,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            },
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440012",
+              "name": "The Art of Programming",
+              "description": "Comprehensive guide to software development",
+              "sku": "BK-PROG-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440008",
+              "price": "49.99",
+              "sale_price": "39.99",
+              "cost_price": "15.00",
+              "weight": "0.80",
+              "dimensions": "23x15x3",
+              "stock_quantity": 50,
+              "min_stock_level": 10,
+              "is_active": true,
+              "is_featured": false,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            },
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440013",
+              "name": "Data Science Handbook",
+              "description": "Complete guide to data science and machine learning",
+              "sku": "BK-DS-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440008",
+              "price": "69.99",
+              "sale_price": null,
+              "cost_price": "25.00",
+              "weight": "1.20",
+              "dimensions": "25x18x4",
+              "stock_quantity": 30,
+              "min_stock_level": 6,
+              "is_active": true,
+              "is_featured": true,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            },
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440014",
+              "name": "Nike Air Max Running Shoes",
+              "description": "Comfortable running shoes with air cushioning",
+              "sku": "NKE-AM-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440009",
+              "price": "129.99",
+              "sale_price": "109.99",
+              "cost_price": "60.00",
+              "weight": "0.80",
+              "dimensions": "30x12x8",
+              "stock_quantity": 80,
+              "min_stock_level": 15,
+              "is_active": true,
+              "is_featured": false,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            },
+            {
+              "product_id": "770e8400-e29b-41d4-a716-446655440015",
+              "name": "Yoga Mat Premium",
+              "description": "Non-slip yoga mat with carrying strap",
+              "sku": "YGA-MAT-001",
+              "category_id": "660e8400-e29b-41d4-a716-446655440009",
+              "price": "39.99",
+              "sale_price": null,
+              "cost_price": "15.00",
+              "weight": "0.50",
+              "dimensions": "183x61x0.6",
+              "stock_quantity": 120,
+              "min_stock_level": 25,
+              "is_active": true,
+              "is_featured": false,
+              "created_at": "2025-08-03T09:27:46.484722",
+              "updated_at": "2025-08-03T09:27:46.484722"
+            }
+          ]
+        },
+        {
+          "name": "user_addresses",
+          "schema": "ecommerce",
+          "type": "table",
+          "row_count": 14,
+          "columns": [
+            {
+              "name": "address_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "user_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "address_type",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "'shipping'::character varying",
+              "comment": null
+            },
+            {
+              "name": "street_address",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "city",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "state",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "postal_code",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "country",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "is_default",
+              "data_type": "boolean",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "false",
+              "comment": null
+            },
+            {
+              "name": "created_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16481_16497_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16497_4_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16497_5_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16497_7_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16497_8_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "user_addresses_user_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "user_id"
+              ],
+              "referenced_table": "users",
+              "referenced_columns": [
+                "user_id"
+              ]
+            },
+            {
+              "name": "user_addresses_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "address_id"
+              ],
+              "referenced_table": "user_addresses",
+              "referenced_columns": [
+                "address_id"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "user_addresses_pkey",
+              "columns": [
+                "address_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            }
+          ],
+          "sample_data": [
+            {
+              "address_id": "0db1310a-2cd9-4b95-a5b4-9f0d70dc4e84",
+              "user_id": "550e8400-e29b-41d4-a716-446655440001",
+              "address_type": "shipping",
+              "street_address": "123 Main St",
+              "city": "New York",
+              "state": "NY",
+              "postal_code": "10001",
+              "country": "USA",
+              "is_default": true,
+              "created_at": "2025-08-03T09:27:46.469355"
+            },
+            {
+              "address_id": "3ae94006-3b44-47d3-92c6-8ec6a16e4778",
+              "user_id": "550e8400-e29b-41d4-a716-446655440001",
+              "address_type": "billing",
+              "street_address": "123 Main St",
+              "city": "New York",
+              "state": "NY",
+              "postal_code": "10001",
+              "country": "USA",
+              "is_default": true,
+              "created_at": "2025-08-03T09:27:46.469355"
+            },
+            {
+              "address_id": "57560dcd-5e4c-4fa1-b103-e0754b2c4fef",
+              "user_id": "550e8400-e29b-41d4-a716-446655440002",
+              "address_type": "shipping",
+              "street_address": "456 Oak Ave",
+              "city": "Los Angeles",
+              "state": "CA",
+              "postal_code": "90210",
+              "country": "USA",
+              "is_default": true,
+              "created_at": "2025-08-03T09:27:46.469355"
+            },
+            {
+              "address_id": "a3b65aeb-8453-4952-8b31-d120bf25ec42",
+              "user_id": "550e8400-e29b-41d4-a716-446655440002",
+              "address_type": "billing",
+              "street_address": "456 Oak Ave",
+              "city": "Los Angeles",
+              "state": "CA",
+              "postal_code": "90210",
+              "country": "USA",
+              "is_default": true,
+              "created_at": "2025-08-03T09:27:46.469355"
+            },
+            {
+              "address_id": "c3ae7d00-3ff7-4d0d-9cc9-913b162dbd2e",
+              "user_id": "550e8400-e29b-41d4-a716-446655440003",
+              "address_type": "shipping",
+              "street_address": "789 Pine Rd",
+              "city": "Chicago",
+              "state": "IL",
+              "postal_code": "60601",
+              "country": "USA",
+              "is_default": true,
+              "created_at": "2025-08-03T09:27:46.469355"
+            },
+            {
+              "address_id": "eb3e4f02-a578-4cd4-861f-cafa3ad09418",
+              "user_id": "550e8400-e29b-41d4-a716-446655440004",
+              "address_type": "shipping",
+              "street_address": "321 Elm St",
+              "city": "Houston",
+              "state": "TX",
+              "postal_code": "77001",
+              "country": "USA",
+              "is_default": true,
+              "created_at": "2025-08-03T09:27:46.469355"
+            },
+            {
+              "address_id": "0dd56b13-b184-4fb2-9266-1e2fdceb9778",
+              "user_id": "550e8400-e29b-41d4-a716-446655440005",
+              "address_type": "shipping",
+              "street_address": "654 Maple Dr",
+              "city": "Phoenix",
+              "state": "AZ",
+              "postal_code": "85001",
+              "country": "USA",
+              "is_default": true,
+              "created_at": "2025-08-03T09:27:46.469355"
+            },
+            {
+              "address_id": "ec37faa9-84df-4bb3-b436-1269866f4a56",
+              "user_id": "550e8400-e29b-41d4-a716-446655440001",
+              "address_type": "shipping",
+              "street_address": "123 Main St",
+              "city": "New York",
+              "state": "NY",
+              "postal_code": "10001",
+              "country": "USA",
+              "is_default": true,
+              "created_at": "2025-08-03T09:29:40.668635"
+            },
+            {
+              "address_id": "16d6ff4d-f829-4bec-933d-b4466dc9f4ad",
+              "user_id": "550e8400-e29b-41d4-a716-446655440001",
+              "address_type": "billing",
+              "street_address": "123 Main St",
+              "city": "New York",
+              "state": "NY",
+              "postal_code": "10001",
+              "country": "USA",
+              "is_default": true,
+              "created_at": "2025-08-03T09:29:40.668635"
+            },
+            {
+              "address_id": "2fc66fd7-d499-4baa-ab59-6e51910360af",
+              "user_id": "550e8400-e29b-41d4-a716-446655440002",
+              "address_type": "shipping",
+              "street_address": "456 Oak Ave",
+              "city": "Los Angeles",
+              "state": "CA",
+              "postal_code": "90210",
+              "country": "USA",
+              "is_default": true,
+              "created_at": "2025-08-03T09:29:40.668635"
+            },
+            {
+              "address_id": "f110e0ce-7caf-434f-b7b0-258e3549b328",
+              "user_id": "550e8400-e29b-41d4-a716-446655440002",
+              "address_type": "billing",
+              "street_address": "456 Oak Ave",
+              "city": "Los Angeles",
+              "state": "CA",
+              "postal_code": "90210",
+              "country": "USA",
+              "is_default": true,
+              "created_at": "2025-08-03T09:29:40.668635"
+            },
+            {
+              "address_id": "44b4c853-c8fe-44d6-9de5-18aeab538a0f",
+              "user_id": "550e8400-e29b-41d4-a716-446655440003",
+              "address_type": "shipping",
+              "street_address": "789 Pine Rd",
+              "city": "Chicago",
+              "state": "IL",
+              "postal_code": "60601",
+              "country": "USA",
+              "is_default": true,
+              "created_at": "2025-08-03T09:29:40.668635"
+            },
+            {
+              "address_id": "9657eeaf-fdc8-4b78-be38-5ec2837ad580",
+              "user_id": "550e8400-e29b-41d4-a716-446655440004",
+              "address_type": "shipping",
+              "street_address": "321 Elm St",
+              "city": "Houston",
+              "state": "TX",
+              "postal_code": "77001",
+              "country": "USA",
+              "is_default": true,
+              "created_at": "2025-08-03T09:29:40.668635"
+            },
+            {
+              "address_id": "a3ca478a-ca92-4f81-9311-47bd9b0b8cce",
+              "user_id": "550e8400-e29b-41d4-a716-446655440005",
+              "address_type": "shipping",
+              "street_address": "654 Maple Dr",
+              "city": "Phoenix",
+              "state": "AZ",
+              "postal_code": "85001",
+              "country": "USA",
+              "is_default": true,
+              "created_at": "2025-08-03T09:29:40.668635"
+            }
+          ]
+        },
+        {
+          "name": "users",
+          "schema": "ecommerce",
+          "type": "table",
+          "row_count": 6,
+          "columns": [
+            {
+              "name": "user_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "email",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "password_hash",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "first_name",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "last_name",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "phone",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "date_of_birth",
+              "data_type": "date",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "created_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            },
+            {
+              "name": "updated_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            },
+            {
+              "name": "is_active",
+              "data_type": "boolean",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "true",
+              "comment": null
+            },
+            {
+              "name": "email_verified",
+              "data_type": "boolean",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "false",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16481_16483_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16483_2_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16483_3_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16483_4_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16481_16483_5_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "users_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "user_id"
+              ],
+              "referenced_table": "users",
+              "referenced_columns": [
+                "user_id"
+              ]
+            },
+            {
+              "name": "users_email_key",
+              "type": "UNIQUE",
+              "columns": [
+                "email"
+              ],
+              "referenced_table": "users",
+              "referenced_columns": [
+                "email"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_users_email",
+              "columns": [
+                "email"
+              ],
+              "is_unique": false,
+              "is_primary": false
+            },
+            {
+              "name": "users_email_key",
+              "columns": [
+                "email"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            },
+            {
+              "name": "users_pkey",
+              "columns": [
+                "user_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            }
+          ],
+          "sample_data": [
+            {
+              "user_id": "550e8400-e29b-41d4-a716-446655440001",
+              "email": "john.doe@example.com",
+              "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8J9QK",
+              "first_name": "John",
+              "last_name": "Doe",
+              "phone": "+1-555-0101",
+              "date_of_birth": "1985-03-15",
+              "created_at": "2025-08-03T09:27:46.465794",
+              "updated_at": "2025-08-03T09:27:46.465794",
+              "is_active": true,
+              "email_verified": true
+            },
+            {
+              "user_id": "550e8400-e29b-41d4-a716-446655440002",
+              "email": "jane.smith@example.com",
+              "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8J9QK",
+              "first_name": "Jane",
+              "last_name": "Smith",
+              "phone": "+1-555-0102",
+              "date_of_birth": "1990-07-22",
+              "created_at": "2025-08-03T09:27:46.465794",
+              "updated_at": "2025-08-03T09:27:46.465794",
+              "is_active": true,
+              "email_verified": true
+            },
+            {
+              "user_id": "550e8400-e29b-41d4-a716-446655440003",
+              "email": "mike.johnson@example.com",
+              "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8J9QK",
+              "first_name": "Mike",
+              "last_name": "Johnson",
+              "phone": "+1-555-0103",
+              "date_of_birth": "1988-11-08",
+              "created_at": "2025-08-03T09:27:46.465794",
+              "updated_at": "2025-08-03T09:27:46.465794",
+              "is_active": true,
+              "email_verified": true
+            },
+            {
+              "user_id": "550e8400-e29b-41d4-a716-446655440004",
+              "email": "sarah.wilson@example.com",
+              "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8J9QK",
+              "first_name": "Sarah",
+              "last_name": "Wilson",
+              "phone": "+1-555-0104",
+              "date_of_birth": "1992-04-12",
+              "created_at": "2025-08-03T09:27:46.465794",
+              "updated_at": "2025-08-03T09:27:46.465794",
+              "is_active": true,
+              "email_verified": true
+            },
+            {
+              "user_id": "550e8400-e29b-41d4-a716-446655440005",
+              "email": "david.brown@example.com",
+              "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8J9QK",
+              "first_name": "David",
+              "last_name": "Brown",
+              "phone": "+1-555-0105",
+              "date_of_birth": "1983-09-30",
+              "created_at": "2025-08-03T09:27:46.465794",
+              "updated_at": "2025-08-03T09:27:46.465794",
+              "is_active": true,
+              "email_verified": true
+            }
+          ]
+        },
+        {
+          "name": "wishlist_items",
+          "schema": "ecommerce",
+          "type": "table",
+          "row_count": 0,
+          "columns": [
+            {
+              "name": "wishlist_item_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "user_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "product_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "added_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16481_16716_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "wishlist_items_product_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "product_id"
+              ],
+              "referenced_table": "products",
+              "referenced_columns": [
+                "product_id"
+              ]
+            },
+            {
+              "name": "wishlist_items_user_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "user_id"
+              ],
+              "referenced_table": "users",
+              "referenced_columns": [
+                "user_id"
+              ]
+            },
+            {
+              "name": "wishlist_items_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "wishlist_item_id"
+              ],
+              "referenced_table": "wishlist_items",
+              "referenced_columns": [
+                "wishlist_item_id"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "wishlist_items_pkey",
+              "columns": [
+                "wishlist_item_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            }
+          ],
+          "sample_data": []
+        }
+      ]
+    },
+    {
+      "schema": "analytics",
+      "scan_timestamp": "2025-08-13T09:26:54Z",
+      "tables": [
+        {
+          "name": "page_views",
+          "schema": "analytics",
+          "type": "table",
+          "row_count": 5,
+          "columns": [
+            {
+              "name": "view_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "user_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "session_id",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "page_url",
+              "data_type": "varchar",
+              "is_nullable": false,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "referrer_url",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "user_agent",
+              "data_type": "text",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "ip_address",
+              "data_type": "unknown",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "viewed_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16482_16733_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "16482_16733_4_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "page_views_user_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "user_id"
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "page_views_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "view_id"
+              ],
+              "referenced_table": "page_views",
+              "referenced_columns": [
+                "view_id"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "page_views_pkey",
+              "columns": [
+                "view_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            }
+          ],
+          "sample_data": [
+            {
+              "view_id": "0a982382-4375-4d9a-bd0b-d62fac92f6a6",
+              "user_id": "550e8400-e29b-41d4-a716-446655440001",
+              "session_id": "sess_001",
+              "page_url": "/products",
+              "referrer_url": "https://google.com",
+              "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+              "ip_address": "192.168.1.100",
+              "viewed_at": "2025-08-03T09:29:40.685081"
+            },
+            {
+              "view_id": "591a9600-c67b-46ae-ae7a-b9d1b3b59c52",
+              "user_id": "550e8400-e29b-41d4-a716-446655440001",
+              "session_id": "sess_001",
+              "page_url": "/products/770e8400-e29b-41d4-a716-446655440001",
+              "referrer_url": "/products",
+              "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+              "ip_address": "192.168.1.100",
+              "viewed_at": "2025-08-03T09:29:40.685081"
+            },
+            {
+              "view_id": "bf3cd5de-7ae0-4bd9-bd69-96f779b7c78a",
+              "user_id": "550e8400-e29b-41d4-a716-446655440002",
+              "session_id": "sess_002",
+              "page_url": "/products",
+              "referrer_url": "https://facebook.com",
+              "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+              "ip_address": "192.168.1.101",
+              "viewed_at": "2025-08-03T09:29:40.685081"
+            },
+            {
+              "view_id": "3fad53e5-d466-4187-8ee4-2ecd7c85abfd",
+              "user_id": "550e8400-e29b-41d4-a716-446655440003",
+              "session_id": "sess_003",
+              "page_url": "/categories/660e8400-e29b-41d4-a716-446655440001",
+              "referrer_url": "https://bing.com",
+              "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)",
+              "ip_address": "192.168.1.102",
+              "viewed_at": "2025-08-03T09:29:40.685081"
+            },
+            {
+              "view_id": "58e40525-9ebc-44bc-b005-11758e52dbc4",
+              "user_id": "550e8400-e29b-41d4-a716-446655440004",
+              "session_id": "sess_004",
+              "page_url": "/products/770e8400-e29b-41d4-a716-446655440003",
+              "referrer_url": "/categories/660e8400-e29b-41d4-a716-446655440003",
+              "user_agent": "Mozilla/5.0 (Android 13)",
+              "ip_address": "192.168.1.103",
+              "viewed_at": "2025-08-03T09:29:40.685081"
+            }
+          ]
+        },
+        {
+          "name": "product_views",
+          "schema": "analytics",
+          "type": "table",
+          "row_count": 6,
+          "columns": [
+            {
+              "name": "view_id",
+              "data_type": "uuid",
+              "is_nullable": false,
+              "is_primary_key": true,
+              "default_value": "uuid_generate_v4()",
+              "comment": null
+            },
+            {
+              "name": "product_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "user_id",
+              "data_type": "uuid",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "session_id",
+              "data_type": "varchar",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": null,
+              "comment": null
+            },
+            {
+              "name": "viewed_at",
+              "data_type": "timestamp",
+              "is_nullable": true,
+              "is_primary_key": false,
+              "default_value": "CURRENT_TIMESTAMP",
+              "comment": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "16482_16747_1_not_null",
+              "type": "CHECK",
+              "columns": [
+                null
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "product_views_product_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "product_id"
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "product_views_user_id_fkey",
+              "type": "FOREIGN KEY",
+              "columns": [
+                "user_id"
+              ],
+              "referenced_table": null,
+              "referenced_columns": [
+                null
+              ]
+            },
+            {
+              "name": "product_views_pkey",
+              "type": "PRIMARY KEY",
+              "columns": [
+                "view_id"
+              ],
+              "referenced_table": "product_views",
+              "referenced_columns": [
+                "view_id"
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "name": "product_views_pkey",
+              "columns": [
+                "view_id"
+              ],
+              "is_unique": true,
+              "is_primary": false
+            }
+          ],
+          "sample_data": [
+            {
+              "view_id": "2084c95b-509d-4241-a747-83bdb98a0359",
+              "product_id": "770e8400-e29b-41d4-a716-446655440001",
+              "user_id": "550e8400-e29b-41d4-a716-446655440001",
+              "session_id": "sess_001",
+              "viewed_at": "2025-08-03T09:29:40.687416"
+            },
+            {
+              "view_id": "3506aa0d-1dbc-42f2-996e-034a949c1684",
+              "product_id": "770e8400-e29b-41d4-a716-446655440002",
+              "user_id": "550e8400-e29b-41d4-a716-446655440002",
+              "session_id": "sess_002",
+              "viewed_at": "2025-08-03T09:29:40.687416"
+            },
+            {
+              "view_id": "c3228459-eee9-410e-ab39-cf37c9171beb",
+              "product_id": "770e8400-e29b-41d4-a716-446655440003",
+              "user_id": "550e8400-e29b-41d4-a716-446655440003",
+              "session_id": "sess_003",
+              "viewed_at": "2025-08-03T09:29:40.687416"
+            },
+            {
+              "view_id": "6a68be92-1214-4346-815d-9a5b30788dec",
+              "product_id": "770e8400-e29b-41d4-a716-446655440003",
+              "user_id": "550e8400-e29b-41d4-a716-446655440004",
+              "session_id": "sess_004",
+              "viewed_at": "2025-08-03T09:29:40.687416"
+            },
+            {
+              "view_id": "174bb911-c59a-465f-ab1d-bbf035b68d14",
+              "product_id": "770e8400-e29b-41d4-a716-446655440007",
+              "user_id": "550e8400-e29b-41d4-a716-446655440002",
+              "session_id": "sess_002",
+              "viewed_at": "2025-08-03T09:29:40.687416"
+            },
+            {
+              "view_id": "219d096c-18c4-469e-a048-22392d4b5b43",
+              "product_id": "770e8400-e29b-41d4-a716-446655440010",
+              "user_id": "550e8400-e29b-41d4-a716-446655440005",
+              "session_id": "sess_005",
+              "viewed_at": "2025-08-03T09:29:40.687416"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

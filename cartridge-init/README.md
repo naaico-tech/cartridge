@@ -5,6 +5,7 @@ AI-powered schema inference and dbt project generation.
 - **Inputs**: database URI and schema name(s), or multi-database configuration
 - **Outputs**: dbt project (models, docs, optional tests)
 - **Engines**: OpenAI, Anthropic, Gemini, or mock; SQLAlchemy for scanning
+- **Databases**: PostgreSQL, BigQuery, MySQL, Snowflake, Redshift (in development)
 - **Features**: Single/multi-schema scanning, multi-database scanning, organized output
 - **Optional**: add `dbt-expectations` tests
 
@@ -121,6 +122,11 @@ cartridge onboard --output my_business.csv
 cartridge scan postgresql://user:pass@host:5432/db --schema public --output scan.json
 ```
 
+- **Single dataset scan (BigQuery)**
+```bash
+cartridge scan bigquery://gcp-project-id/dataset_name?credentials_path=/path/to/key.json --output scan.json
+```
+
 - **Multi-schema scan (same database)**
 ```bash
 cartridge scan postgresql://user:pass@host:5432/db --schemas public,staging,marts --output multi_schema_scan.json
@@ -143,6 +149,10 @@ databases:
   - name: "marketing_db"
     uri: "mysql://user:password@localhost:3306/marketing"
     schemas: ["raw", "campaigns", "metrics"]
+  
+  - name: "bigquery_warehouse"
+    uri: "bigquery://gcp-project-id/dataset_name?credentials_path=/path/to/key.json"
+    schemas: ["dataset_name"]
   
   - name: "warehouse_db"
     uri: "postgresql://user:password@warehouse.example.com:5432/warehouse"
