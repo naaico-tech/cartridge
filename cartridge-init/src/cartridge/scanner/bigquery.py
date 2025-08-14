@@ -52,9 +52,13 @@ class BigQueryConnector(DatabaseConnector):
                 credentials = service_account.Credentials.from_service_account_file(self.credentials_path)
             else:
                 # Default credentials (ADC - Application Default Credentials)
-                credentials, default_project = default()
-                if not self.project_id:
-                    self.project_id = default_project
+                try:
+                    credentials, default_project = default()
+                    if not self.project_id:
+                        self.project_id = default_project
+                except Exception:
+                    # If default() fails, set credentials to None and rely on project_id
+                    credentials = None
             
             # Create BigQuery client
             if credentials:
@@ -371,7 +375,7 @@ class BigQueryConnector(DatabaseConnector):
             # Numeric types
             "INTEGER": DataType.BIGINT,
             "INT64": DataType.BIGINT,
-            "FLOAT": DataType.FLOAT,
+            "FLOAT": DataType.DOUBLE,
             "FLOAT64": DataType.DOUBLE,
             "NUMERIC": DataType.NUMERIC,
             "DECIMAL": DataType.DECIMAL,
@@ -386,7 +390,7 @@ class BigQueryConnector(DatabaseConnector):
             "DATE": DataType.DATE,
             "TIME": DataType.TIME,
             "DATETIME": DataType.TIMESTAMP,
-            "TIMESTAMP": DataType.TIMESTAMPTZ,
+            "TIMESTAMP": DataType.TIMESTAMP,
             
             # Boolean
             "BOOLEAN": DataType.BOOLEAN,
