@@ -28,7 +28,18 @@ See CLI-focused docs: `cartridge-init/README.md`.
   - Auto-insight generation (patterns, anomalies)
 - **Tech**: dbt-core, Pandas/Polars, Streamlit, AI (LangChain or OpenAI)
 
-### D. cartridge-deployer: K8s & Infra Bootstrap
+### D. cartridge-warp: CDC Streaming Component
+- **Inputs**: NoSQL and SQL sources
+- **Outputs**: Real-time data streaming to SQL and NoSQL destinations
+- **Features**:
+  - Change Data Capture (CDC) streaming
+  - Real-time schema evolution
+  - Metric monitoring through Prometheus
+  - Fast-track production system connections
+  - Multi-destination support
+- **Tech**: Python, CDC technologies, Prometheus
+
+### E. cartridge-deployer: K8s & Infra Bootstrap
 - **Helm Charts for**:
   - dbt Core on Kubernetes
   - Airflow
