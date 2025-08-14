@@ -375,7 +375,7 @@ class BigQueryConnector(DatabaseConnector):
             # Numeric types
             "INTEGER": DataType.BIGINT,
             "INT64": DataType.BIGINT,
-            "FLOAT": DataType.DOUBLE,
+            "FLOAT": DataType.FLOAT,
             "FLOAT64": DataType.DOUBLE,
             "NUMERIC": DataType.NUMERIC,
             "DECIMAL": DataType.DECIMAL,
@@ -390,7 +390,7 @@ class BigQueryConnector(DatabaseConnector):
             "DATE": DataType.DATE,
             "TIME": DataType.TIME,
             "DATETIME": DataType.TIMESTAMP,
-            "TIMESTAMP": DataType.TIMESTAMP,
+            "TIMESTAMP": DataType.TIMESTAMPTZ,
             
             # Boolean
             "BOOLEAN": DataType.BOOLEAN,
