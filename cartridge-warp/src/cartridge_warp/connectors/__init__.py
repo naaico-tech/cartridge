@@ -2,6 +2,7 @@
 
 # Import connectors to register them
 from . import mongodb_source  # noqa: F401
+from . import postgresql_destination  # noqa: F401
 from .base import (
     BaseDestinationConnector,
     BaseSourceConnector,

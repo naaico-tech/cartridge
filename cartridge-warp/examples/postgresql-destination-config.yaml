@@ -1,0 +1,83 @@
+# PostgreSQL Destination Connector Configuration Example
+#
+# This example demonstrates the comprehensive configuration options available
+# for the PostgreSQL destination connector in cartridge-warp.
+
+# Basic PostgreSQL Destination Configuration
+mode: "single"
+single_schema_name: "ecommerce"
+
+source:
+  type: "mongodb"
+  connection_string: "mongodb://admin:password@localhost:27017"
+  database: "ecommerce_db"
+  change_detection_strategy: "log"
+  timezone: "UTC"
+
+destination:
+  type: "postgresql"
+  connection_string: "postgresql://warehouse_user:password@localhost:5432/data_warehouse"
+  database: "data_warehouse"
+  metadata_schema: "cartridge_warp_metadata"
+
+schemas:
+  - name: "ecommerce"
+    tables:
+      - name: "users"
+        mode: "stream"
+        stream_batch_size: 1000
+        full_resync_batch_size: 10000
+        
+      - name: "orders"
+        mode: "stream"
+        stream_batch_size: 500
+        full_resync_batch_size: 5000
+        
+      - name: "products"
+        mode: "batch"
+        batch_interval_minutes: 60
+        batch_size: 2000
+
+# PostgreSQL-specific configuration options
+postgresql_config:
+  # Connection Pool Settings
+  max_connections: 20
+  min_connections: 5
+  connection_timeout: 30.0
+  command_timeout: 60.0
+  
+  # Performance Settings
+  batch_size: 1000
+  max_retries: 3
+  
+  # UPSERT and Conflict Resolution
+  upsert_mode: "on_conflict"  # "on_conflict" or "merge"
+  
+  # Delete Strategy
+  deletion_strategy: "soft"  # "soft", "hard", or "both"
+  enable_soft_deletes: true
+  
+  # Schema Evolution
+  auto_create_schema: true
+  auto_create_tables: true
+  enable_schema_evolution: true
+  safe_type_widening: true
+  
+  # Data Type Handling
+  json_column_type: "jsonb"  # "jsonb" or "json"
+  timestamp_with_timezone: true
+  string_max_length: 65535
+  
+  # Index Management
+  auto_create_indexes: true
+  index_creation_timeout: 300
+  
+  # Monitoring and Logging
+  log_slow_queries: true
+  slow_query_threshold: 5.0
+  enable_query_logging: false
+  
+  # Advanced Options
+  use_prepared_statements: true
+  enable_connection_pooling: true
+  pool_recycle_time: 3600
