@@ -1,8 +1,9 @@
 """Test configuration for cartridge-warp."""
 
-import pytest
 import asyncio
-from pathlib import Path
+
+import pytest
+
 
 @pytest.fixture(scope="session")
 def event_loop():
@@ -10,6 +11,7 @@ def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
+
 
 @pytest.fixture
 def sample_config_file(tmp_path):
@@ -42,7 +44,7 @@ monitoring:
 error_handling:
   max_retries: 1
 """
-    
+
     config_file = tmp_path / "test_config.yaml"
     config_file.write_text(config_content)
     return config_file

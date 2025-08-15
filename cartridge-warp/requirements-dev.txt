@@ -1,0 +1,9 @@
+# Development requirements for cartridge-warp
+# Install with: pip install -r requirements-dev.txt
+
+# Core development dependencies
+-e .[dev,test]
+
+# Additional development tools that might be useful
+jupyterlab>=4.0.0  # For interactive development and analysis
+notebook>=7.0.0    # Jupyter notebook support

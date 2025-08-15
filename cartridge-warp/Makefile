@@ -7,6 +7,7 @@ help:
 	@echo "Available targets:"
 	@echo "  install       Install package for production"
 	@echo "  install-dev   Install package with development dependencies"
+	@echo "  install-all   Install package with all optional dependencies"
 	@echo "  test          Run tests"
 	@echo "  test-coverage Run tests with coverage report"
 	@echo "  lint          Run linting checks"
@@ -23,6 +24,9 @@ install:
 
 install-dev:
 	pip install -e ".[dev,test]"
+
+install-all:
+	pip install -e ".[all]"
 
 # Testing targets
 test:

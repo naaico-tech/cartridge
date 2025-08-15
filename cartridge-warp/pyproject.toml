@@ -54,23 +54,70 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    # Testing framework
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.5.0",  # Parallel test execution
+    "testcontainers>=3.7.0",  # Integration testing with containers
+    
+    # Code formatting and linting
     "black>=23.0.0",
     "ruff>=0.1.0",
+    "isort>=5.12.0",  # Import sorting
+    
+    # Type checking
     "mypy>=1.7.0",
+    "types-PyYAML>=6.0.0",  # Type stubs for PyYAML
+    "types-setuptools>=69.0.0",  # Type stubs for setuptools
+    
+    # Development tools
     "pre-commit>=3.5.0",
+    "bump2version>=1.0.1",  # Version bumping
+    "twine>=4.0.2",  # Package publishing
+    
+    # Documentation
+    "sphinx>=7.1.0",
+    "sphinx-rtd-theme>=1.3.0",
+    "myst-parser>=2.0.0",  # Markdown parser for Sphinx
+    
+    # Debugging and profiling
+    "ipython>=8.15.0",
+    "ipdb>=0.13.13",  # Enhanced debugger
+    "memory-profiler>=0.61.0",  # Memory profiling
+    
+    # Development utilities
+    "watchdog>=3.0.0",  # File watching for auto-reload
+    "python-dotenv>=1.0.0",  # Already in main deps but useful for dev
 ]
 bigquery = [
     "google-cloud-bigquery>=3.13.0",
     "google-cloud-bigquery-storage>=2.22.0",
 ]
 test = [
+    # Core testing framework
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.5.0",  # Parallel test execution
+    "pytest-mock>=3.12.0",  # Mocking utilities
+    "pytest-timeout>=2.2.0",  # Test timeouts
+    "pytest-benchmark>=4.0.0",  # Performance benchmarking
+    
+    # Integration testing
     "testcontainers>=3.7.0",
+    
+    # Test data and factories
+    "factory-boy>=3.3.0",  # Test data factories
+    "faker>=20.1.0",  # Fake data generation
+    
+    # HTTP testing (for API endpoints)
+    "httpx>=0.25.0",  # Async HTTP client for testing
+    "respx>=0.20.0",  # HTTP request mocking
+]
+all = [
+    # Include all optional dependencies for complete development setup
+    "cartridge-warp[dev,test,bigquery]",
 ]
 
 [project.urls]

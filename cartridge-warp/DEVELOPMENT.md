@@ -10,8 +10,17 @@ This guide covers the development setup, architecture, and implementation detail
 # Clone the repository
 cd cartridge-warp
 
-# Install development dependencies
+# Option 1: Install with development dependencies (recommended)
 make install-dev
+
+# Option 2: Install with all optional dependencies (includes BigQuery, docs, etc.)
+make install-all
+
+# Option 3: Using pip directly
+pip install -e ".[dev,test]"
+
+# Option 4: Using requirements file
+pip install -r requirements-dev.txt
 
 # Run tests to verify setup
 make test
@@ -19,6 +28,16 @@ make test
 # Start development services
 docker-compose up -d mongodb postgresql prometheus grafana
 ```
+
+### Available Installation Options
+
+- **Production**: `pip install -e .` - Core dependencies only
+- **Development**: `pip install -e ".[dev,test]"` - Includes testing, linting, formatting tools
+- **All Dependencies**: `pip install -e ".[all]"` - Everything including BigQuery, documentation tools
+- **Individual Groups**: 
+  - `pip install -e ".[dev]"` - Development tools (black, ruff, mypy, etc.)
+  - `pip install -e ".[test]"` - Testing framework (pytest, coverage, etc.)
+  - `pip install -e ".[bigquery]"` - BigQuery connector dependencies
 
 ### 2. Configuration and Testing
 
