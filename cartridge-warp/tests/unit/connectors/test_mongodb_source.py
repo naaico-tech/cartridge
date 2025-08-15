@@ -2,7 +2,7 @@
 
 import json
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from bson import ObjectId, Timestamp
@@ -48,7 +48,7 @@ class TestMongoDBTypeMapper:
         """Test flattening simple documents."""
         doc = {"name": "John", "age": 30}
         flattened = MongoDBTypeMapper.flatten_document(doc)
-        
+
         assert flattened == {"name": "John", "age": 30}
 
     def test_flatten_document_nested(self):
@@ -61,7 +61,7 @@ class TestMongoDBTypeMapper:
             }
         }
         flattened = MongoDBTypeMapper.flatten_document(doc)
-        
+
         expected = {
             "name": "John",
             "address_street": "123 Main St",
@@ -81,7 +81,7 @@ class TestMongoDBTypeMapper:
             }
         }
         flattened = MongoDBTypeMapper.flatten_document(doc, max_depth=2)
-        
+
         expected = {
             "level1_level2": json.dumps({"level3": {"level4": "deep"}})
         }
@@ -94,7 +94,7 @@ class TestMongoDBTypeMapper:
             "scores": [85, 90, 78]
         }
         flattened = MongoDBTypeMapper.flatten_document(doc)
-        
+
         expected = {
             "tags": json.dumps(["python", "mongodb"]),
             "scores": json.dumps([85, 90, 78])
@@ -109,7 +109,7 @@ class TestMongoDBTypeMapper:
             "null_value": None
         }
         flattened = MongoDBTypeMapper.flatten_document(doc)
-        
+
         expected = {
             "empty_dict": None,
             "empty_list": None,
@@ -161,9 +161,9 @@ class TestMongoDBSourceConnector:
             mock_client.admin.command = AsyncMock(return_value={"ok": 1})
             mock_client.server_info = AsyncMock(return_value={"version": "5.0.0"})
             mock_motor.return_value = mock_client
-            
+
             await connector.connect()
-            
+
             assert connector.connected is True
             assert connector._client is mock_client
             mock_client.admin.command.assert_called_once_with("ping")
@@ -172,15 +172,15 @@ class TestMongoDBSourceConnector:
     async def test_connect_failure(self, connector):
         """Test connection failure handling."""
         from pymongo.errors import ConnectionFailure
-        
+
         with patch("cartridge_warp.connectors.mongodb_source.AsyncIOMotorClient") as mock_motor:
             mock_client = AsyncMock()
             mock_client.admin.command.side_effect = ConnectionFailure("Connection failed")
             mock_motor.return_value = mock_client
-            
+
             with pytest.raises(ConnectionFailure):
                 await connector.connect()
-            
+
             assert connector.connected is False
 
     @pytest.mark.asyncio
@@ -188,9 +188,9 @@ class TestMongoDBSourceConnector:
         """Test disconnection from MongoDB."""
         connector._client = mock_client
         connector.connected = True
-        
+
         await connector.disconnect()
-        
+
         assert connector.connected is False
         assert connector._client is None
         mock_client.close.assert_called_once()
@@ -200,55 +200,55 @@ class TestMongoDBSourceConnector:
         """Test schema discovery."""
         # Setup mocks
         connector.connected = True
-        
+
         # Mock database
         mock_database = AsyncMock()
         mock_database.list_collection_names = AsyncMock(return_value=["users", "orders"])
         connector._database = mock_database
-        
+
         # Mock collection and documents
         sample_docs = [
             {"_id": ObjectId(), "name": "John", "age": 30, "active": True},
             {"_id": ObjectId(), "name": "Jane", "age": 25, "email": "jane@example.com"},
         ]
-        
+
         # Create a mock collection with proper method chaining
         mock_collection = AsyncMock()
         mock_collection.name = "test_collection"
-        
+
         # Mock the find().limit() chain - return the actual sample docs
         async def async_find_iterator():
             for doc in sample_docs:
                 yield doc
-        
+
         mock_find_cursor = AsyncMock()
         mock_find_cursor.__aiter__ = lambda: async_find_iterator()
-        
+
         mock_limit_cursor = AsyncMock()
         mock_limit_cursor.return_value = mock_find_cursor
-        
+
         mock_find_result = AsyncMock()
         mock_find_result.limit = mock_limit_cursor
-        
+
         mock_collection.find.return_value = mock_find_result
-        
+
         # Mock list_indexes
         async def async_index_iterator():
             yield {"name": "_id_", "key": {"_id": 1}, "unique": True}
-        
+
         mock_indexes_cursor = AsyncMock()
         mock_indexes_cursor.__aiter__ = lambda: async_index_iterator()
         mock_collection.list_indexes.return_value = mock_indexes_cursor
-        
+
         # Mock database collection access
         mock_database.__getitem__.return_value = mock_collection
-        
+
         # Test schema discovery
         schema = await connector.get_schema("test_schema")
-        
+
         assert schema.name == "test_db"
         assert len(schema.tables) == 2  # users and orders collections
-        
+
         # Verify database method calls
         mock_database.list_collection_names.assert_called_once()
 
@@ -257,37 +257,37 @@ class TestMongoDBSourceConnector:
         """Test full snapshot functionality."""
         # Setup mocks
         connector.connected = True
-        
+
         # Mock database
         mock_database = AsyncMock()
         connector._database = mock_database
-        
+
         sample_docs = [
             {"_id": ObjectId(), "name": "John", "age": 30},
             {"_id": ObjectId(), "name": "Jane", "age": 25},
         ]
-        
+
         # Mock collection with proper method chaining
         mock_collection = AsyncMock()
-        
+
         async def async_snapshot_iterator():
             for doc in sample_docs:
                 yield doc
-        
+
         mock_batch_cursor = AsyncMock()
         mock_batch_cursor.__aiter__ = lambda: async_snapshot_iterator()
-        
+
         mock_find_result = AsyncMock()
         mock_find_result.batch_size.return_value = mock_batch_cursor
         mock_collection.find.return_value = mock_find_result
-        
+
         mock_database.__getitem__.return_value = mock_collection
-        
+
         # Test full snapshot
         records = []
         async for record in connector.get_full_snapshot("test_schema", "test_table", 100):
             records.append(record)
-        
+
         assert len(records) == 2
         assert all(record.table_name == "test_table" for record in records)
         assert all(record.operation == OperationType.INSERT for record in records)
@@ -304,9 +304,9 @@ class TestMongoDBSourceConnector:
             },
             "tags": ["user", "premium"]
         }
-        
+
         record = connector._document_to_record(doc, "users", OperationType.INSERT)
-        
+
         assert record.table_name == "users"
         assert record.operation == OperationType.INSERT
         assert record.data["name"] == "John Doe"
@@ -328,9 +328,9 @@ class TestMongoDBSourceConnector:
                 "age": 30
             }
         }
-        
+
         event = connector._change_to_event(change)
-        
+
         assert event is not None
         assert event.record.operation == OperationType.INSERT
         assert event.record.table_name == "users"
@@ -353,9 +353,9 @@ class TestMongoDBSourceConnector:
                 "removedFields": []
             }
         }
-        
+
         event = connector._change_to_event(change)
-        
+
         assert event is not None
         assert event.record.operation == OperationType.UPDATE
         assert event.record.table_name == "users"
@@ -372,9 +372,9 @@ class TestMongoDBSourceConnector:
             "ns": {"db": "test_db", "coll": "users"},
             "documentKey": {"_id": doc_id}
         }
-        
+
         event = connector._change_to_event(change)
-        
+
         assert event is not None
         assert event.record.operation == OperationType.DELETE
         assert event.record.table_name == "users"
@@ -387,9 +387,9 @@ class TestMongoDBSourceConnector:
             "operationType": "unknown",
             "ns": {"db": "test_db", "coll": "users"}
         }
-        
+
         event = connector._change_to_event(change)
-        
+
         assert event is None
 
     def test_infer_columns_from_documents(self, connector):
@@ -399,29 +399,29 @@ class TestMongoDBSourceConnector:
             {"name": "Jane", "age": None, "active": False, "tags": ["user"]},
             {"name": "Bob", "age": 25, "active": True, "metadata": {"role": "admin"}},
         ]
-        
+
         columns = connector._infer_columns_from_documents(documents)
-        
+
         # Convert to dict for easier testing
         column_dict = {col.name: col for col in columns}
-        
+
         assert "name" in column_dict
         assert column_dict["name"].type == ColumnType.STRING
         assert column_dict["name"].nullable is False
-        
+
         assert "age" in column_dict
         assert column_dict["age"].type == ColumnType.INTEGER
         assert column_dict["age"].nullable is True  # Due to None value
-        
+
         assert "active" in column_dict
         assert column_dict["active"].type == ColumnType.BOOLEAN
-        
+
         assert "score" in column_dict
         assert column_dict["score"].type == ColumnType.DOUBLE
-        
+
         assert "tags" in column_dict
         assert column_dict["tags"].type == ColumnType.STRING  # JSON converted to string after flattening
-        
+
         assert "metadata_role" in column_dict
         assert column_dict["metadata_role"].type == ColumnType.STRING
 
@@ -430,46 +430,46 @@ class TestMongoDBSourceConnector:
         """Test getting changes using timestamp strategy."""
         # Setup mocks
         connector.connected = True
-        
+
         # Mock database
         mock_database = AsyncMock()
         mock_database.list_collection_names = AsyncMock(return_value=["users"])
         connector._database = mock_database
         connector.change_detection_strategy = "timestamp"
-        
+
         # Mock documents with timestamp
         timestamp = datetime.now(timezone.utc)
         sample_docs = [
             {"_id": ObjectId(), "name": "John", "updated_at": timestamp}
         ]
-        
+
         # Mock collection with proper method chaining
         mock_collection = AsyncMock()
-        
+
         async def async_changes_iterator():
             for doc in sample_docs:
                 yield doc
-        
+
         mock_final_cursor = AsyncMock()
         mock_final_cursor.__aiter__ = lambda: async_changes_iterator()
-        
+
         mock_limit_result = AsyncMock()
         mock_limit_result.return_value = mock_final_cursor
-        
+
         mock_sort_result = AsyncMock()
         mock_sort_result.limit = mock_limit_result
-        
+
         mock_find_result = AsyncMock()
         mock_find_result.sort.return_value = mock_sort_result
         mock_collection.find.return_value = mock_find_result
-        
+
         mock_database.__getitem__.return_value = mock_collection
-        
+
         # Test getting changes
         events = []
         async for event in connector.get_changes("test_schema", batch_size=100):
             events.append(event)
-        
+
         assert len(events) >= 1  # Should have at least one event
 
     @pytest.mark.asyncio
@@ -477,9 +477,9 @@ class TestMongoDBSourceConnector:
         """Test successful connection test."""
         with patch.object(connector, "connect", new_callable=AsyncMock) as mock_connect, \
              patch.object(connector, "disconnect", new_callable=AsyncMock) as mock_disconnect:
-            
+
             result = await connector.test_connection()
-            
+
             assert result is True
             mock_connect.assert_called_once()
             mock_disconnect.assert_called_once()
@@ -489,9 +489,9 @@ class TestMongoDBSourceConnector:
         """Test connection test failure."""
         with patch.object(connector, "connect", new_callable=AsyncMock) as mock_connect:
             mock_connect.side_effect = Exception("Connection failed")
-            
+
             result = await connector.test_connection()
-            
+
             assert result is False
 
     @pytest.mark.asyncio
@@ -499,10 +499,10 @@ class TestMongoDBSourceConnector:
         """Test using connector as async context manager."""
         with patch.object(connector, "connect", new_callable=AsyncMock) as mock_connect, \
              patch.object(connector, "disconnect", new_callable=AsyncMock) as mock_disconnect:
-            
+
             async with connector:
                 pass
-            
+
             mock_connect.assert_called_once()
             mock_disconnect.assert_called_once()
 
@@ -510,14 +510,14 @@ class TestMongoDBSourceConnector:
     async def test_runtime_error_when_not_connected(self, connector):
         """Test that methods raise RuntimeError when not connected."""
         connector.connected = False
-        
+
         with pytest.raises(RuntimeError, match="Not connected to MongoDB"):
             await connector.get_schema("test_schema")
-        
+
         with pytest.raises(RuntimeError, match="Not connected to MongoDB"):
             async for _ in connector.get_changes("test_schema"):
                 pass
-        
+
         with pytest.raises(RuntimeError, match="Not connected to MongoDB"):
             async for _ in connector.get_full_snapshot("test_schema", "test_table"):
                 pass
