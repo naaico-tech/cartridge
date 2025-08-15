@@ -1,5 +1,7 @@
 """Database connectors for cartridge-warp."""
 
+# Import connectors to register them
+from . import mongodb_source  # noqa: F401
 from .base import (
     BaseDestinationConnector,
     BaseSourceConnector,
