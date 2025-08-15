@@ -1,0 +1,145 @@
+# Comprehensive Configuration Example with Environment Variable Support
+# This file demonstrates all the new parallelism and table filtering features
+
+mode: "single"
+single_schema_name: "ecommerce"
+
+# Global Parallelism Configuration
+# Can be overridden via: CARTRIDGE_WARP_GLOBAL_MAX_PARALLEL_STREAMS=4
+global_max_parallel_streams: 2
+
+# Global Table Filtering (applied to all schemas)
+# Can be overridden via: CARTRIDGE_WARP_GLOBAL_TABLE_WHITELIST=users,orders,products
+# Can be overridden via: CARTRIDGE_WARP_GLOBAL_TABLE_BLACKLIST=temp_tables,logs
+# Note: Whitelist takes precedence over blacklist if both are specified
+global_table_whitelist: ["users", "orders", "products", "categories", "inventory"]
+# global_table_blacklist: ["temp_tables", "audit_logs", "debug_logs"]
+
+# Source Database Configuration
+# Connection string can be overridden via: CARTRIDGE_WARP_SOURCE__CONNECTION_STRING
+source:
+  type: "mongodb"
+  connection_string: "mongodb://localhost:27017"
+  database: "ecommerce_db"
+  change_detection_column: "updated_at"
+  change_detection_strategy: "timestamp"
+  timezone: "UTC"
+
+# Destination Database Configuration
+# Connection string can be overridden via: CARTRIDGE_WARP_DESTINATION__CONNECTION_STRING
+destination:
+  type: "postgresql"
+  connection_string: "postgresql://user:password@localhost:5432/warehouse"
+  database: "warehouse"
+  metadata_schema: "cartridge_warp_metadata"
+
+# Schema Configuration
+schemas:
+  - name: "ecommerce"
+    mode: "stream"
+    default_batch_size: 1000
+    default_polling_interval: 5
+    
+    # Schema-level parallelism override
+    # Overrides global_max_parallel_streams for tables in this schema
+    default_max_parallel_streams: 3
+    
+    # Schema-level table filtering
+    # Further filters the globally allowed tables
+    # table_whitelist: ["users", "orders", "products"]  # Subset of global whitelist
+    table_blacklist: ["categories"]  # Exclude categories even though it's in global whitelist
+    
+    # Table-specific configurations with parallelism settings
+    tables:
+      # High-priority user data - conservative parallelism
+      - name: "users"
+        mode: "stream"
+        stream_batch_size: 500
+        write_batch_size: 250
+        full_load_batch_size: 5000
+        polling_interval_seconds: 2
+        max_parallel_streams: 1  # Single stream for data consistency
+        enable_schema_evolution: true
+        deletion_strategy: "soft"
+        soft_delete_column: "is_deleted"
+        
+      # High-volume order data - aggressive parallelism
+      - name: "orders"
+        mode: "stream"
+        stream_batch_size: 2000
+        write_batch_size: 1000
+        full_load_batch_size: 20000
+        polling_interval_seconds: 5
+        max_parallel_streams: 5  # High parallelism for throughput
+        enable_schema_evolution: true
+        deletion_strategy: "hard"
+        
+      # Product catalog - moderate parallelism
+      - name: "products"
+        mode: "stream"
+        stream_batch_size: 1000
+        write_batch_size: 500
+        full_load_batch_size: 10000
+        polling_interval_seconds: 10
+        max_parallel_streams: 2  # Balanced approach
+        enable_schema_evolution: true
+        deletion_strategy: "soft"
+        soft_delete_column: "archived"
+        
+      # Real-time inventory - uses schema default parallelism (3)
+      - name: "inventory"
+        mode: "stream"
+        stream_batch_size: 300
+        write_batch_size: 150
+        full_load_batch_size: 3000
+        polling_interval_seconds: 1
+        # max_parallel_streams not specified - uses default_max_parallel_streams (3)
+        enable_schema_evolution: true
+        deletion_strategy: "soft"
+        soft_delete_column: "is_deleted"
+
+# Monitoring Configuration
+# Can be overridden via environment variables with CARTRIDGE_WARP_MONITORING__ prefix
+monitoring:
+  prometheus:
+    enabled: true
+    port: 8080
+    path: "/metrics"
+  log_level: "INFO"  # Can be overridden via CARTRIDGE_WARP_MONITORING__LOG_LEVEL=DEBUG
+  structured_logging: true
+
+# Error Handling Configuration
+# Can be overridden via environment variables with CARTRIDGE_WARP_ERROR_HANDLING__ prefix
+error_handling:
+  max_retries: 3
+  backoff_factor: 2.0
+  max_backoff_seconds: 300
+  dead_letter_queue: true
+  ignore_type_conversion_errors: true
+  log_conversion_warnings: true
+
+# Runtime Settings
+# Can be overridden via CARTRIDGE_WARP_DRY_RUN=true and CARTRIDGE_WARP_FULL_RESYNC=true
+dry_run: false
+full_resync: false
+
+# Example Environment Variable Overrides:
+# 
+# # Connection strings (most common override)
+# export CARTRIDGE_WARP_SOURCE__CONNECTION_STRING="mongodb+srv://user:pass@cluster.mongodb.net/prod"
+# export CARTRIDGE_WARP_DESTINATION__CONNECTION_STRING="postgresql://user:pass@prod-db:5432/warehouse"
+# 
+# # Parallelism settings
+# export CARTRIDGE_WARP_GLOBAL_MAX_PARALLEL_STREAMS=4
+# 
+# # Table filtering (comma-separated)
+# export CARTRIDGE_WARP_GLOBAL_TABLE_WHITELIST="users,orders,products"
+# export CARTRIDGE_WARP_GLOBAL_TABLE_BLACKLIST="temp_tables,logs,debug"
+# 
+# # Monitoring and logging
+# export CARTRIDGE_WARP_MONITORING__LOG_LEVEL=DEBUG
+# export CARTRIDGE_WARP_MONITORING__PROMETHEUS__PORT=9090
+# 
+# # Runtime settings
+# export CARTRIDGE_WARP_DRY_RUN=true
+# export CARTRIDGE_WARP_FULL_RESYNC=false

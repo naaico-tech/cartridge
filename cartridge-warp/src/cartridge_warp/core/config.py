@@ -3,7 +3,7 @@
 import os
 import sys
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 import yaml
 from pydantic import BaseModel, Field, field_validator
@@ -18,6 +18,18 @@ def _is_test_mode() -> bool:
         or any("_pytest" in m for m in sys.modules)
         or (len(sys.argv) > 0 and "pytest" in sys.argv[0])
     )
+
+
+def _parse_comma_separated_list(value: Any) -> Optional[list[str]]:
+    """Parse comma-separated string into list of strings."""
+    if value is None:
+        return None
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
+        # Split by comma and strip whitespace, filter empty strings
+        return [item.strip() for item in value.split(",") if item.strip()]
+    return None
 
 
 class SourceConfig(BaseModel):
@@ -94,6 +106,9 @@ class TableConfig(BaseModel):
     # Timing
     polling_interval_seconds: int = Field(5, description="Polling interval for changes")
 
+    # Parallelism configuration
+    max_parallel_streams: Optional[int] = Field(None, description="Maximum parallel streams for this table")
+    
     # Schema evolution
     enable_schema_evolution: bool = Field(True, description="Allow schema changes")
 
@@ -115,6 +130,29 @@ class SchemaConfig(BaseModel):
     # Default settings for tables in this schema
     default_batch_size: int = Field(1000, description="Default batch size")
     default_polling_interval: int = Field(5, description="Default polling interval")
+    
+    # Default parallelism settings
+    default_max_parallel_streams: int = Field(1, description="Default maximum parallel streams per table")
+
+    # Table filtering
+    table_whitelist: Optional[list[str]] = Field(
+        None, description="List of tables to include (whitelist takes precedence over blacklist)"
+    )
+    table_blacklist: Optional[list[str]] = Field(
+        None, description="List of tables to exclude"
+    )
+
+    @field_validator("table_whitelist", mode="before")
+    @classmethod
+    def parse_table_whitelist(cls, v):
+        """Parse comma-separated string for table whitelist."""
+        return _parse_comma_separated_list(v)
+
+    @field_validator("table_blacklist", mode="before")
+    @classmethod
+    def parse_table_blacklist(cls, v):
+        """Parse comma-separated string for table blacklist."""
+        return _parse_comma_separated_list(v)
 
     # Table-specific overrides
     tables: list[TableConfig] = Field(
@@ -123,6 +161,19 @@ class SchemaConfig(BaseModel):
 
     # Schedule for batch mode
     schedule: Optional[str] = Field(None, description="Cron schedule for batch mode")
+
+    def is_table_allowed(self, table_name: str) -> bool:
+        """Check if a table is allowed based on whitelist/blacklist configuration."""
+        # Whitelist takes precedence - if whitelist is defined, only allow tables in it
+        if self.table_whitelist is not None:
+            return table_name in self.table_whitelist
+            
+        # If no whitelist but blacklist exists, exclude tables in blacklist
+        if self.table_blacklist is not None:
+            return table_name not in self.table_blacklist
+            
+        # If neither whitelist nor blacklist is defined, allow all tables
+        return True
 
 
 class PrometheusConfig(BaseModel):
@@ -168,6 +219,31 @@ class WarpConfig(BaseSettings):
     # Single schema mode settings
     single_schema_name: Optional[str] = None
 
+    # Global parallelism settings
+    global_max_parallel_streams: int = Field(
+        1, description="Global maximum parallel streams per table (can be overridden at schema/table level)"
+    )
+    
+    # Global table filtering (applied to all schemas)
+    global_table_whitelist: Optional[list[str]] = Field(
+        None, description="Global list of tables to include (applies to all schemas)"
+    )
+    global_table_blacklist: Optional[list[str]] = Field(
+        None, description="Global list of tables to exclude (applies to all schemas)"
+    )
+
+    @field_validator("global_table_whitelist", mode="before")
+    @classmethod
+    def parse_global_table_whitelist(cls, v):
+        """Parse comma-separated string for global table whitelist."""
+        return _parse_comma_separated_list(v)
+
+    @field_validator("global_table_blacklist", mode="before")
+    @classmethod
+    def parse_global_table_blacklist(cls, v):
+        """Parse comma-separated string for global table blacklist."""
+        return _parse_comma_separated_list(v)
+
     # Global settings
     monitoring: MonitoringConfig = MonitoringConfig()
     error_handling: ErrorHandlingConfig = ErrorHandlingConfig()
@@ -177,6 +253,32 @@ class WarpConfig(BaseSettings):
     full_resync: bool = False
 
     model_config = {"env_prefix": "CARTRIDGE_WARP_", "case_sensitive": False}
+
+    def is_table_globally_allowed(self, table_name: str) -> bool:
+        """Check if a table is allowed based on global whitelist/blacklist configuration."""
+        # Global whitelist takes precedence
+        if self.global_table_whitelist is not None:
+            return table_name in self.global_table_whitelist
+            
+        # If no global whitelist but global blacklist exists, exclude tables in blacklist
+        if self.global_table_blacklist is not None:
+            return table_name not in self.global_table_blacklist
+            
+        # If neither global whitelist nor blacklist is defined, allow all tables
+        return True
+
+    def is_table_allowed(self, schema_name: str, table_name: str) -> bool:
+        """Check if a table is allowed considering both global and schema-level filters."""
+        # First check global filters
+        if not self.is_table_globally_allowed(table_name):
+            return False
+            
+        # Then check schema-level filters
+        schema_config = self.get_schema_config(schema_name)
+        if schema_config:
+            return schema_config.is_table_allowed(table_name)
+            
+        return True
 
     @field_validator("schemas")
     @classmethod
@@ -226,3 +328,20 @@ class WarpConfig(BaseSettings):
             if table_config.name == table_name:
                 return table_config
         return None
+
+    def get_effective_max_parallel_streams(
+        self, schema_name: str, table_name: str
+    ) -> int:
+        """Get the effective max parallel streams for a table, considering hierarchy."""
+        # Check table-level configuration first
+        table_config = self.get_table_config(schema_name, table_name)
+        if table_config and table_config.max_parallel_streams is not None:
+            return table_config.max_parallel_streams
+            
+        # Check schema-level configuration
+        schema_config = self.get_schema_config(schema_name)
+        if schema_config:
+            return schema_config.default_max_parallel_streams
+            
+        # Fall back to global configuration
+        return self.global_max_parallel_streams

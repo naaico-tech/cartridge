@@ -4,6 +4,13 @@
 mode: "single"
 single_schema_name: "ecommerce"
 
+# Global parallelism settings (can be overridden at schema/table level)
+global_max_parallel_streams: 2
+
+# Global table filtering (applied to all schemas)
+# global_table_whitelist: ["users", "orders", "products"]  # Only process these tables
+# global_table_blacklist: ["temp_tables", "logs"]          # Exclude these tables (whitelist takes precedence)
+
 # Source Database Configuration
 source:
   type: "mongodb"
@@ -26,6 +33,11 @@ schemas:
     mode: "stream"
     default_batch_size: 1000
     default_polling_interval: 5
+    default_max_parallel_streams: 3  # Override global setting for this schema
+    
+    # Schema-level table filtering
+    table_whitelist: ["users", "orders", "products", "categories"]  # Only process these tables in this schema
+    # table_blacklist: ["audit_logs", "temp_data"]  # Alternative: exclude these tables (whitelist takes precedence)
     
     # Table-specific configurations
     tables:
@@ -35,6 +47,7 @@ schemas:
         write_batch_size: 250
         full_load_batch_size: 5000
         polling_interval_seconds: 2
+        max_parallel_streams: 1  # Conservative for user data
         enable_schema_evolution: true
         deletion_strategy: "soft"
         soft_delete_column: "is_deleted"
@@ -45,6 +58,7 @@ schemas:
         write_batch_size: 1000
         full_load_batch_size: 20000
         polling_interval_seconds: 10
+        max_parallel_streams: 4  # High throughput table, allow more parallelism
         enable_schema_evolution: true
         deletion_strategy: "hard"
         
@@ -54,6 +68,7 @@ schemas:
         write_batch_size: 500
         full_load_batch_size: 10000
         polling_interval_seconds: 300  # 5 minutes for batch updates
+        max_parallel_streams: 2  # Moderate parallelism for product updates
         enable_schema_evolution: true
         deletion_strategy: "soft"
         soft_delete_column: "archived"

@@ -53,7 +53,11 @@ def run(
     dry_run: bool,
     full_resync: bool,
 ):
-    """Run CDC streaming with the specified configuration."""
+    """Run CDC streaming with the specified configuration.
+    
+    Configuration can be overridden using environment variables with the 
+    CARTRIDGE_WARP_ prefix. Use 'cartridge-warp env-help' for examples.
+    """
 
     try:
         # Load configuration
@@ -240,6 +244,46 @@ def _display_config_summary(config: WarpConfig):
             schema_table.add_row(schema.name, schema.mode, str(table_count))
 
         console.print(schema_table)
+
+
+@cli.command("env-help")
+def env_help():
+    """Show environment variable configuration examples."""
+    console.print("[bold]Environment Variable Configuration[/bold]")
+    console.print()
+    console.print("All configuration can be overridden using environment variables with the CARTRIDGE_WARP_ prefix.")
+    console.print()
+    
+    console.print("[bold cyan]Connection Strings (Most Common)[/bold cyan]")
+    console.print("export CARTRIDGE_WARP_SOURCE__CONNECTION_STRING='mongodb+srv://user:pass@cluster.mongodb.net/prod'")
+    console.print("export CARTRIDGE_WARP_DESTINATION__CONNECTION_STRING='postgresql://user:pass@prod-db:5432/warehouse'")
+    console.print()
+    
+    console.print("[bold cyan]Parallelism Configuration[/bold cyan]")
+    console.print("export CARTRIDGE_WARP_GLOBAL_MAX_PARALLEL_STREAMS=4")
+    console.print()
+    
+    console.print("[bold cyan]Table Filtering (Comma-separated)[/bold cyan]")
+    console.print("export CARTRIDGE_WARP_GLOBAL_TABLE_WHITELIST='users,orders,products'")
+    console.print("export CARTRIDGE_WARP_GLOBAL_TABLE_BLACKLIST='temp_tables,logs,debug'")
+    console.print()
+    
+    console.print("[bold cyan]Monitoring and Runtime[/bold cyan]")
+    console.print("export CARTRIDGE_WARP_MONITORING__LOG_LEVEL=DEBUG")
+    console.print("export CARTRIDGE_WARP_MONITORING__PROMETHEUS__PORT=9090")
+    console.print("export CARTRIDGE_WARP_DRY_RUN=true")
+    console.print("export CARTRIDGE_WARP_FULL_RESYNC=false")
+    console.print()
+    
+    console.print("[bold cyan]Error Handling[/bold cyan]")
+    console.print("export CARTRIDGE_WARP_ERROR_HANDLING__MAX_RETRIES=5")
+    console.print("export CARTRIDGE_WARP_ERROR_HANDLING__BACKOFF_FACTOR=2.0")
+    console.print()
+    
+    console.print("[yellow]Note: Use double underscores (__) to access nested configuration.[/yellow]")
+    console.print("[yellow]Example: CARTRIDGE_WARP_SOURCE__TYPE or CARTRIDGE_WARP_MONITORING__PROMETHEUS__ENABLED[/yellow]")
+    console.print()
+    console.print("For complete documentation, see: docs/parallelism-and-filtering.md")
 
 
 def main():

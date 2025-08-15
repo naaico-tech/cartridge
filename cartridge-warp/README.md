@@ -5,11 +5,14 @@ A modular Change Data Capture (CDC) streaming platform for real-time and batch d
 ## Features
 
 - **Dual Execution Modes**: Single schema per process (K8s optimized) or multi-schema per process
+- **Configurable Parallelism**: Table-level stream parallelism with hierarchical configuration (global → schema → table)
+- **Advanced Table Filtering**: Whitelist/blacklist configuration at global and schema levels with environment variable support
 - **Schema Evolution**: Automatic schema change detection and intelligent type conversion
 - **Modular Connectors**: Pluggable source and destination database adapters
 - **Comprehensive Monitoring**: Prometheus metrics for throughput, health, and performance
 - **Fault Tolerance**: Robust error handling with configurable retry strategies
-- **Flexible Configuration**: Table-level performance tuning and behavior customization
+- **Flexible Configuration**: Hierarchical configuration with environment variable overrides
+- **Production Ready**: Environment-specific configuration management
 
 ## Quick Start
 
@@ -58,6 +61,10 @@ See [PLAN.md](./PLAN.md) for detailed architecture and implementation plan.
 
 ### Basic Configuration
 ```yaml
+# Parallelism and table filtering
+global_max_parallel_streams: 2
+global_table_whitelist: ["users", "orders", "products"]
+
 source:
   type: mongodb
   connection_string: "mongodb://localhost:27017"
@@ -70,16 +77,40 @@ destination:
 schemas:
   - name: "products"
     mode: "stream"
-    batch_size: 1000
-  - name: "orders"
-    mode: "batch"
-    batch_size: 5000
+    default_max_parallel_streams: 3  # Override global setting
+    table_blacklist: ["temp_tables"]  # Exclude from schema
+    
+    tables:
+      - name: "orders"
+        max_parallel_streams: 5  # High throughput table
+        batch_size: 1000
+      - name: "users"
+        max_parallel_streams: 1  # Conservative for user data
+        batch_size: 500
 
 monitoring:
   prometheus:
     enabled: true
     port: 8080
 ```
+
+### Environment Variable Overrides
+```bash
+# Connection strings (production)
+export CARTRIDGE_WARP_SOURCE__CONNECTION_STRING="mongodb+srv://user:pass@cluster.mongodb.net/prod"
+export CARTRIDGE_WARP_DESTINATION__CONNECTION_STRING="postgresql://user:pass@prod-db:5432/warehouse"
+
+# Parallelism and filtering
+export CARTRIDGE_WARP_GLOBAL_MAX_PARALLEL_STREAMS=4
+export CARTRIDGE_WARP_GLOBAL_TABLE_WHITELIST="users,orders,products"
+export CARTRIDGE_WARP_GLOBAL_TABLE_BLACKLIST="temp_tables,logs"
+
+# Runtime settings
+export CARTRIDGE_WARP_MONITORING__LOG_LEVEL=DEBUG
+export CARTRIDGE_WARP_DRY_RUN=true
+```
+
+For comprehensive configuration documentation, see [docs/parallelism-and-filtering.md](./docs/parallelism-and-filtering.md).
 
 ## Supported Connectors
 
