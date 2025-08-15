@@ -1,0 +1,81 @@
+# Example configuration for cartridge-warp CDC streaming
+
+# Single Schema Configuration Example
+mode: "single"
+single_schema_name: "ecommerce"
+
+# Source Database Configuration
+source:
+  type: "mongodb"
+  connection_string: "mongodb://localhost:27017"
+  database: "ecommerce_db"
+  change_detection_column: "updated_at"
+  change_detection_strategy: "timestamp"
+  timezone: "UTC"
+
+# Destination Database Configuration  
+destination:
+  type: "postgresql"
+  connection_string: "postgresql://user:password@localhost:5432/warehouse"
+  database: "warehouse"
+  metadata_schema: "cartridge_warp_metadata"
+
+# Schema Configuration
+schemas:
+  - name: "ecommerce"
+    mode: "stream"
+    default_batch_size: 1000
+    default_polling_interval: 5
+    
+    # Table-specific configurations
+    tables:
+      - name: "users"
+        mode: "stream"
+        stream_batch_size: 500
+        write_batch_size: 250
+        full_load_batch_size: 5000
+        polling_interval_seconds: 2
+        enable_schema_evolution: true
+        deletion_strategy: "soft"
+        soft_delete_column: "is_deleted"
+        
+      - name: "orders"
+        mode: "stream"
+        stream_batch_size: 2000
+        write_batch_size: 1000
+        full_load_batch_size: 20000
+        polling_interval_seconds: 10
+        enable_schema_evolution: true
+        deletion_strategy: "hard"
+        
+      - name: "products"
+        mode: "batch"
+        stream_batch_size: 1000
+        write_batch_size: 500
+        full_load_batch_size: 10000
+        polling_interval_seconds: 300  # 5 minutes for batch updates
+        enable_schema_evolution: true
+        deletion_strategy: "soft"
+        soft_delete_column: "archived"
+
+# Monitoring Configuration
+monitoring:
+  prometheus:
+    enabled: true
+    port: 8080
+    path: "/metrics"
+  log_level: "INFO"
+  structured_logging: true
+
+# Error Handling Configuration
+error_handling:
+  max_retries: 3
+  backoff_factor: 2.0
+  max_backoff_seconds: 300
+  dead_letter_queue: true
+  ignore_type_conversion_errors: true
+  log_conversion_warnings: true
+
+# Runtime Settings
+dry_run: false
+full_resync: false

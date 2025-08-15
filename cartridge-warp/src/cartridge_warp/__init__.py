@@ -1,7 +1,7 @@
 """
 Cartridge-Warp: CDC Streaming Platform
 
-A modular Change Data Capture (CDC) streaming platform for real-time 
+A modular Change Data Capture (CDC) streaming platform for real-time
 and batch data synchronization between various databases.
 """
 

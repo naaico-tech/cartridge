@@ -196,8 +196,8 @@ tests/
 ## 🔀 Git & CI/CD Patterns
 
 ### Branch Strategy
-- **Feature branches** from main
-- **No direct commits** to main
+- **Feature branches** from master
+- **No direct commits** to master
 - **Squash merges** preferred
 
 ### Commit Messages

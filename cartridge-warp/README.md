@@ -36,15 +36,23 @@ See [PLAN.md](./PLAN.md) for detailed architecture and implementation plan.
 
 ## Development Status
 
-🚧 **In Development** - This component is currently being built according to the plan outlined in PLAN.md.
+✅ **Core Framework Complete** - The foundational architecture has been implemented according to the plan in PLAN.md.
 
-### Current Phase: Core Framework
-- [ ] Base connector interfaces and abstractions
-- [ ] Configuration management system
+### ✅ Completed: Core Framework Implementation
+- ✅ **Base connector interfaces and abstractions** - Protocol-based source/destination interfaces
+- ✅ **Configuration management system** - Pydantic-based validation with YAML support
+- ✅ **Connector factory with registration system** - Decorator-based plugin architecture
+- ✅ **Runner architecture** - Async execution with single/multi-schema modes
+- ✅ **Schema processor** - Independent table processing with change detection
+- ✅ **Error handling and logging** - Structured logging with correlation IDs
+- ✅ **Comprehensive test suite** - 11 tests covering core framework functionality
+
+### 🚧 Next Phase: Database Connectors
+- [ ] MongoDB source connector implementation
+- [ ] PostgreSQL destination connector implementation
+- [ ] Schema evolution and DDL change detection
+- [ ] Full table sync capabilities
 - [ ] Metadata storage layer
-- [ ] Basic MongoDB → PostgreSQL connector
-- [ ] Single schema execution mode
-- [ ] Basic error handling and logging
 
 ## Configuration
 
@@ -91,6 +99,30 @@ Cartridge-warp exposes Prometheus metrics for:
 - Schema evolution events
 - Error rates and types
 - Performance metrics
+
+## Development
+
+### Quick Start
+```bash
+# Clone the repository
+cd cartridge-warp
+
+# Install development dependencies
+make install-dev
+
+# Run tests
+make test
+
+# Format code and run quality checks
+make format lint type-check
+```
+
+### Installation Options
+- **Development**: `make install-dev` - Core development tools
+- **Complete**: `make install-all` - All optional dependencies
+- **Custom**: `pip install -e ".[dev,test,bigquery]"` - Specific groups
+
+See [DEVELOPMENT.md](./DEVELOPMENT.md) for detailed development setup and [docs/development-dependencies.md](./docs/development-dependencies.md) for dependency management guide.
 
 ## Contributing
 
