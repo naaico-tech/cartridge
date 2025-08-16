@@ -111,16 +111,40 @@ class TestPostgreSQLDestinationConnector:
             command_timeout=60.0,
         )
 
-    def test_initialization(self, connector):
-        """Test connector initialization."""
-        assert connector.connection_string == "postgresql://test_user:test_pass@localhost:5432/test_db"
-        assert connector.min_connections == 2
-        assert connector.max_connections == 5
+    def test_initialization(self):
+        """Test connector initialization with default and custom parameters."""
+        # Test with default parameters
+        connector = PostgreSQLDestinationConnector("postgresql://test")
+        
+        assert connector.connection_string == "postgresql://test"
+        assert connector.metadata_schema == "cartridge_warp_metadata"
         assert connector.batch_size == 1000
+        assert connector.max_connections == 10
+        assert connector.min_connections == 2
         assert connector.enable_soft_deletes is True
-        assert connector.deletion_strategy == "hard"
-        assert connector.connected is False
+        assert connector.deletion_strategy == "soft"
+        assert connector.soft_delete_flag_column == "is_deleted"
+        assert connector.soft_delete_timestamp_column == "deleted_at"
+        assert not connector.connected
         assert connector.pool is None
+        
+        # Test with custom parameters
+        connector_custom = PostgreSQLDestinationConnector(
+            "postgresql://custom",
+            batch_size=500,
+            max_connections=20,
+            enable_soft_deletes=False,
+            deletion_strategy="hard",
+            soft_delete_flag_column="archived",
+            soft_delete_timestamp_column="archived_at"
+        )
+        
+        assert connector_custom.batch_size == 500
+        assert connector_custom.max_connections == 20
+        assert connector_custom.enable_soft_deletes is False
+        assert connector_custom.deletion_strategy == "hard"
+        assert connector_custom.soft_delete_flag_column == "archived"
+        assert connector_custom.soft_delete_timestamp_column == "archived_at"
 
     @pytest.mark.asyncio
     async def test_connect_success(self, connector):

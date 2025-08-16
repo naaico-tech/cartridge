@@ -12,7 +12,7 @@ Implements comprehensive PostgreSQL destination functionality including:
 import json
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union, Tuple
 
 import asyncpg
 import structlog
@@ -22,6 +22,7 @@ from asyncpg.exceptions import (
     PostgresError,
     UniqueViolationError,
 )
+from dateutil.parser import isoparse
 
 from .base import (
     BaseDestinationConnector,
@@ -101,9 +102,9 @@ class PostgreSQLTypeMapper:
                 
         elif target_type == ColumnType.TIMESTAMP:
             if isinstance(value, str):
-                # Parse ISO format timestamp
+                # Use dateutil for robust ISO 8601 parsing
                 try:
-                    return datetime.fromisoformat(value.replace('Z', '+00:00'))
+                    return isoparse(value)
                 except ValueError:
                     logger.warning("Failed to parse timestamp", value=value)
                     return value
@@ -168,8 +169,11 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
         deletion_strategy: str = "soft",  # "soft", "hard", "both"
         upsert_mode: str = "on_conflict",  # "on_conflict", "merge"
         max_retries: int = 3,
-        **kwargs,
-    ):
+        soft_delete_flag_column: str = "is_deleted",
+        soft_delete_timestamp_column: str = "deleted_at",
+        safe_type_conversions: Optional[Set[Tuple[str, str]]] = None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize PostgreSQL destination connector.
         
         Args:
@@ -184,6 +188,9 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
             deletion_strategy: How to handle deletes ("soft", "hard", "both")
             upsert_mode: UPSERT strategy to use
             max_retries: Maximum retry attempts for failed operations
+            soft_delete_flag_column: Column name for soft delete flag
+            soft_delete_timestamp_column: Column name for soft delete timestamp
+            safe_type_conversions: Set of safe type conversion tuples
             **kwargs: Additional configuration options
         """
         super().__init__(connection_string, metadata_schema, **kwargs)
@@ -197,6 +204,16 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
         self.deletion_strategy = deletion_strategy
         self.upsert_mode = upsert_mode
         self.max_retries = max_retries
+        self.soft_delete_flag_column = soft_delete_flag_column
+        self.soft_delete_timestamp_column = soft_delete_timestamp_column
+        
+        # Configure safe type conversions
+        default_safe_conversions = {
+            ("integer", "bigint"),
+            ("float", "double"),
+            ("string", "json"),
+        }
+        self.safe_type_conversions = safe_type_conversions or default_safe_conversions
         
         self.pool: Optional[Pool] = None
         self.type_mapper = PostgreSQLTypeMapper()
@@ -272,7 +289,7 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
             return
             
         try:
-            async with self.pool.acquire() as conn:
+            async with self.pool.acquire() as conn:  # type: ignore[union-attr]
                 # Use quoted identifier to handle special characters
                 query = f'CREATE SCHEMA IF NOT EXISTS "{schema_name}"'
                 await conn.execute(query)
@@ -315,8 +332,8 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
             
             # Add soft delete column if enabled
             if self.enable_soft_deletes:
-                columns.append('"is_deleted" BOOLEAN DEFAULT FALSE')
-                columns.append('"deleted_at" TIMESTAMP WITH TIME ZONE')
+                columns.append(f'"{self.soft_delete_flag_column}" BOOLEAN DEFAULT FALSE')
+                columns.append(f'"{self.soft_delete_timestamp_column}" TIMESTAMP WITH TIME ZONE')
             
             # Add metadata columns
             columns.extend([
@@ -344,6 +361,10 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
                 # Create indexes if specified
                 if table_schema.indexes:
                     await self._create_indexes(conn, schema_name, table_schema)
+                
+                # Create performance indexes for soft deletes
+                if self.enable_soft_deletes:
+                    await self._create_soft_delete_indexes(conn, schema_name, table_schema)
                 
                 self._created_tables.add(table_key)
                 self._table_schemas[table_key] = table_schema
@@ -391,6 +412,24 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
                 
             except Exception as e:
                 logger.warning("Failed to create index", index=index_def, error=str(e))
+
+    async def _create_soft_delete_indexes(
+        self, conn: Connection, schema_name: str, table_schema: TableSchema
+    ) -> None:
+        """Create performance indexes for soft delete operations."""
+        try:
+            # Create index for active (non-deleted) records
+            index_name = f"idx_{table_schema.name}_{self.soft_delete_flag_column}_active"
+            query = f'''
+                CREATE INDEX IF NOT EXISTS "{index_name}"
+                ON "{schema_name}"."{table_schema.name}" ("{self.soft_delete_flag_column}")
+                WHERE "{self.soft_delete_flag_column}" IS NULL OR "{self.soft_delete_flag_column}" = FALSE
+            '''
+            await conn.execute(query)
+            logger.debug("Soft delete index created", index=index_name)
+            
+        except Exception as e:
+            logger.warning("Failed to create soft delete indexes", table=table_schema.name, error=str(e))
 
     async def write_batch(self, schema_name: str, records: List[Record]) -> None:
         """Write a batch of records using optimized UPSERT operations."""
@@ -490,7 +529,7 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
         
         # Add metadata columns
         if self.enable_soft_deletes:
-            columns.extend(["is_deleted", "deleted_at"])
+            columns.extend([self.soft_delete_flag_column, self.soft_delete_timestamp_column])
         columns.extend(["_cartridge_created_at", "_cartridge_updated_at", "_cartridge_version"])
         
         placeholders = ", ".join(f"${i+1}" for i in range(len(columns)))
@@ -534,8 +573,96 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
             
             batch_data.append(row_data)
         
-        # Execute batch insert
-        await conn.executemany(query, batch_data)
+        # Execute batch insert - use copy for large batches, executemany for smaller ones
+        if len(batch_data) > 100:  # Use copy for bulk operations
+            await self._bulk_copy_insert(conn, schema_name, table_schema, columns, batch_data)
+        else:
+            await conn.executemany(query, batch_data)
+
+    async def _bulk_copy_insert(
+        self,
+        conn: Connection,
+        schema_name: str,
+        table_schema: TableSchema,
+        columns: List[str],
+        batch_data: List[List[Any]]
+    ) -> None:
+        """Use COPY for bulk insert operations for better performance."""
+        try:
+            # Create a temporary table for COPY operation
+            temp_table = f"temp_{table_schema.name}_{uuid.uuid4().hex[:8]}"
+            
+            # Create temporary table with same structure
+            columns_def = []
+            for i, col_name in enumerate(columns):
+                # Find column definition from schema
+                col_def = None
+                for schema_col in table_schema.columns:
+                    if schema_col.name == col_name:
+                        col_def = schema_col
+                        break
+                
+                if col_def:
+                    pg_type = self.type_mapper.get_postgresql_type(col_def.type, col_def.max_length)
+                    columns_def.append(f'"{col_name}" {pg_type}')
+                else:
+                    # Metadata columns
+                    if col_name in ["_cartridge_created_at", "_cartridge_updated_at"]:
+                        columns_def.append(f'"{col_name}" TIMESTAMP WITH TIME ZONE')
+                    elif col_name == "_cartridge_version":
+                        columns_def.append(f'"{col_name}" INTEGER')
+                    elif col_name == self.soft_delete_flag_column:
+                        columns_def.append(f'"{col_name}" BOOLEAN')
+                    elif col_name == self.soft_delete_timestamp_column:
+                        columns_def.append(f'"{col_name}" TIMESTAMP WITH TIME ZONE')
+            
+            create_temp_query = f'''
+                CREATE TEMP TABLE "{temp_table}" ({", ".join(columns_def)})
+            '''
+            
+            await conn.execute(create_temp_query)
+            
+            # Use copy_records_to_table for bulk insert
+            columns_tuple = tuple(columns)
+            await conn.copy_records_to_table(temp_table, records=batch_data, columns=columns_tuple)
+            
+            # Insert from temp table to main table with UPSERT logic
+            main_columns = ", ".join(f'"{col}"' for col in columns)
+            temp_columns = ", ".join(f'temp."{col}"' for col in columns)
+            
+            # Build conflict resolution
+            conflict_columns = table_schema.primary_keys or ["_cartridge_created_at"]
+            conflict_clause = ", ".join(f'"{col}"' for col in conflict_columns)
+            
+            # Update clause for conflicts
+            update_sets = []
+            for col in columns:
+                if col not in conflict_columns:
+                    update_sets.append(f'"{col}" = EXCLUDED."{col}"')
+            update_clause = ", ".join(update_sets)
+            
+            upsert_query = f'''
+                INSERT INTO "{schema_name}"."{table_schema.name}" ({main_columns})
+                SELECT {temp_columns} FROM "{temp_table}" temp
+                ON CONFLICT ({conflict_clause})
+                DO UPDATE SET {update_clause}
+            '''
+            
+            await conn.execute(upsert_query)
+            
+            # Drop temporary table
+            await conn.execute(f'DROP TABLE "{temp_table}"')
+            
+        except Exception as e:
+            logger.error("Bulk copy insert failed, falling back to executemany", error=str(e))
+            # Fallback to regular executemany
+            query = f'''
+                INSERT INTO "{schema_name}"."{table_schema.name}" ({", ".join(f'"{col}"' for col in columns)})
+                VALUES ({", ".join(f"${i+1}" for i in range(len(columns)))})
+                ON CONFLICT ({", ".join(f'"{col}"' for col in (table_schema.primary_keys or ["_cartridge_created_at"]))})
+                DO UPDATE SET {", ".join(f'"{col}" = EXCLUDED."{col}"' for col in columns if col not in (table_schema.primary_keys or ["_cartridge_created_at"]))}
+            '''
+            await conn.executemany(query, batch_data)
 
     async def _process_updates(
         self,
@@ -637,11 +764,11 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
         
         query = f'''
             UPDATE "{schema_name}"."{table_schema.name}"
-            SET "is_deleted" = ${param_idx}, 
-                "deleted_at" = ${param_idx + 1},
+            SET "{self.soft_delete_flag_column}" = ${param_idx}, 
+                "{self.soft_delete_timestamp_column}" = ${param_idx + 1},
                 "_cartridge_updated_at" = ${param_idx + 2},
                 "_cartridge_version" = "_cartridge_version" + 1
-            WHERE {where_clause} AND ("is_deleted" IS NULL OR "is_deleted" = FALSE)
+            WHERE {where_clause} AND ("{self.soft_delete_flag_column}" IS NULL OR "{self.soft_delete_flag_column}" = FALSE)
         '''
         
         await conn.execute(query, *values)
@@ -752,14 +879,8 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
         if not column_name:
             raise ValueError("Column name is required for modify_column operation")
         
-        # Only allow safe type widening
-        safe_widenings = {
-            (ColumnType.INTEGER, ColumnType.BIGINT),
-            (ColumnType.FLOAT, ColumnType.DOUBLE),
-            (ColumnType.STRING, ColumnType.JSON),
-        }
-        
-        if (old_type, new_type) not in safe_widenings:
+        # Only allow safe type widening based on configuration
+        if (old_type.value, new_type.value) not in self.safe_type_conversions:
             logger.warning(
                 "Unsafe column type change skipped",
                 column=column_name,
