@@ -1,4 +1,9 @@
-"""Comprehensive tests for metadata management system."""
+"""Comprehensive tests for metadata management system.
+
+Unit tests with mocked database connections for fast execution.
+For integration tests with real databases using testcontainers, 
+see tests/integration/test_metadata_integration.py
+"""
 
 import asyncio
 import json

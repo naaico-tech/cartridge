@@ -54,7 +54,10 @@ class MetadataManager:
         connection_pool: Pool,
         metadata_schema: str = "cartridge_warp",
         enable_cleanup: bool = True,
-        retention_days: int = 30
+        retention_days: int = 30,
+        cleanup_interval_seconds: int = 3600,
+        retry_initial_interval_seconds: int = 60,
+        retry_max_interval_seconds: int = 3600
     ):
         """Initialize metadata manager.
         
@@ -63,11 +66,17 @@ class MetadataManager:
             metadata_schema: Schema name for metadata tables
             enable_cleanup: Whether to enable automatic cleanup operations
             retention_days: Number of days to retain historical metadata
+            cleanup_interval_seconds: Interval between cleanup runs (default: 1 hour)
+            retry_initial_interval_seconds: Initial retry interval on cleanup failure (default: 1 minute)
+            retry_max_interval_seconds: Maximum retry interval with exponential backoff (default: 1 hour)
         """
         self.pool = connection_pool
         self.metadata_schema = metadata_schema
         self.enable_cleanup = enable_cleanup
         self.retention_days = retention_days
+        self.cleanup_interval_seconds = cleanup_interval_seconds
+        self.retry_initial_interval_seconds = retry_initial_interval_seconds
+        self.retry_max_interval_seconds = retry_max_interval_seconds
         self._initialized = False
         
         # Cache for frequently accessed data
@@ -883,14 +892,26 @@ class MetadataManager:
 
     async def _background_cleanup(self) -> None:
         """Background task for periodic metadata cleanup."""
+        retry_interval = self.retry_initial_interval_seconds
+        consecutive_failures = 0
+        
         while True:
             try:
-                await asyncio.sleep(3600)  # Run every hour
+                await asyncio.sleep(self.cleanup_interval_seconds)
                 await self.cleanup_old_metadata()
                 await self.recover_failed_runs()
+                # Reset backoff after success
+                retry_interval = self.retry_initial_interval_seconds
+                consecutive_failures = 0
             except Exception as e:
                 logger.error("Background cleanup failed", error=str(e))
-                await asyncio.sleep(3600)  # Wait before retrying
+                consecutive_failures += 1
+                # Exponential backoff, capped at max
+                retry_interval = min(
+                    self.retry_initial_interval_seconds * (2 ** (consecutive_failures - 1)), 
+                    self.retry_max_interval_seconds
+                )
+                await asyncio.sleep(retry_interval)  # Wait before retrying
 
     # =====================
     # Query and Reporting Methods

@@ -133,19 +133,21 @@ class SchemaDefinition(BaseModel):
     primary_keys: List[str] = Field(default_factory=list)
     indexes: List[Dict[str, Any]] = Field(default_factory=list)
     constraints: List[Dict[str, Any]] = Field(default_factory=list)
+    _schema_hash: Optional[str] = None  # Cache for computed hash
     
-    @computed_field
     @property
     def schema_hash(self) -> str:
-        """Compute SHA-256 hash of normalized schema."""
-        normalized = {
-            "columns": sorted(self.columns, key=lambda x: x.get("name", "")),
-            "primary_keys": sorted(self.primary_keys),
-            "indexes": sorted(self.indexes, key=lambda x: x.get("name", "")),
-            "constraints": sorted(self.constraints, key=lambda x: x.get("name", ""))
-        }
-        schema_str = json.dumps(normalized, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(schema_str.encode()).hexdigest()
+        """Compute SHA-256 hash of normalized schema (cached)."""
+        if self._schema_hash is None:
+            normalized = {
+                "columns": sorted(self.columns, key=lambda x: x.get("name", "")),
+                "primary_keys": sorted(self.primary_keys),
+                "indexes": sorted(self.indexes, key=lambda x: x.get("name", "")),
+                "constraints": sorted(self.constraints, key=lambda x: x.get("name", ""))
+            }
+            schema_str = json.dumps(normalized, sort_keys=True, separators=(',', ':'))
+            object.__setattr__(self, '_schema_hash', hashlib.sha256(schema_str.encode()).hexdigest())
+        return self._schema_hash  # type: ignore
 
 
 class SchemaRegistry(BaseMetadataModel):
@@ -162,7 +164,6 @@ class SchemaRegistry(BaseMetadataModel):
     registered_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     registered_by: str = Field(default="cartridge-warp", max_length=255)
     
-    @computed_field
     @property
     def schema_hash(self) -> str:
         """Get schema hash from definition."""
