@@ -115,8 +115,12 @@ class PostgreSQLTypeMapper:
                 return value
                 
         elif target_type in (ColumnType.INTEGER, ColumnType.BIGINT):
-            if isinstance(value, str) and value.isdigit():
-                return int(value)
+            if isinstance(value, str):
+                try:
+                    return int(value)
+                except ValueError:
+                    logger.warning("Failed to convert to int", value=value)
+                    return value
             elif isinstance(value, (int, float)):
                 return int(value)
                 
@@ -194,6 +198,10 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
             **kwargs: Additional configuration options
         """
         super().__init__(connection_string, metadata_schema, **kwargs)
+        
+        # Validate batch_size parameter
+        if not isinstance(batch_size, int) or batch_size < 1:
+            raise ValueError(f"batch_size must be a positive integer, got {batch_size!r}")
         
         self.batch_size = batch_size
         self.max_connections = max_connections
@@ -290,7 +298,8 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
             
         try:
             async with self.pool.acquire() as conn:  # type: ignore[union-attr]
-                # Use quoted identifier to handle special characters
+                # Use quoted identifier to handle special characters safely
+                # asyncpg properly handles quoted identifiers for SQL injection protection
                 query = f'CREATE SCHEMA IF NOT EXISTS "{schema_name}"'
                 await conn.execute(query)
                 
@@ -355,7 +364,7 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
                 )
             '''
             
-            async with self.pool.acquire() as conn:
+            async with self.pool.acquire() as conn:  # type: ignore[union-attr]
                 await conn.execute(query)
                 
                 # Create indexes if specified
@@ -460,7 +469,7 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
             return
         
         try:
-            async with self.pool.acquire() as conn:
+            async with self.pool.acquire() as conn:  # type: ignore[union-attr]
                 async with conn.transaction():
                     # Process records in smaller batches for memory efficiency
                     for i in range(0, len(records), self.batch_size):
@@ -594,7 +603,7 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
             
             # Create temporary table with same structure
             columns_def = []
-            for i, col_name in enumerate(columns):
+            for col_name in columns:
                 # Find column definition from schema
                 col_def = None
                 for schema_col in table_schema.columns:
@@ -654,7 +663,15 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
             await conn.execute(f'DROP TABLE "{temp_table}"')
             
         except Exception as e:
-            logger.error("Bulk copy insert failed, falling back to executemany", error=str(e))
+            logger.error(
+                "Bulk copy insert failed for table '%s.%s' with %d records. "
+                "Falling back to executemany, which may significantly impact performance. "
+                "Exception: %s",
+                schema_name,
+                table_schema.name,
+                len(batch_data),
+                str(e)
+            )
             # Fallback to regular executemany
             query = f'''
                 INSERT INTO "{schema_name}"."{table_schema.name}" ({", ".join(f'"{col}"' for col in columns)})
@@ -805,7 +822,7 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
             return
         
         try:
-            async with self.pool.acquire() as conn:
+            async with self.pool.acquire() as conn:  # type: ignore[union-attr]
                 for change in changes:
                     await self._apply_single_schema_change(conn, change)
                     
@@ -945,7 +962,7 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
                     updated_at = EXCLUDED.updated_at
             '''
             
-            async with self.pool.acquire() as conn:
+            async with self.pool.acquire() as conn:  # type: ignore[union-attr]
                 await conn.execute(
                     query,
                     schema_name,
@@ -976,7 +993,7 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
                 WHERE schema_name = $1 AND table_name = $2
             '''
             
-            async with self.pool.acquire() as conn:
+            async with self.pool.acquire() as conn:  # type: ignore[union-attr]
                 row = await conn.fetchrow(query, schema_name, table_name)
                 
                 if row and row["marker_value"]:
@@ -1004,5 +1021,5 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
             )
         '''
         
-        async with self.pool.acquire() as conn:
+        async with self.pool.acquire() as conn:  # type: ignore[union-attr]
             await conn.execute(query)
