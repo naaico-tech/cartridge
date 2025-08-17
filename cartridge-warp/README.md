@@ -35,6 +35,14 @@ cartridge-warp \
 
 ## Architecture
 
+Cartridge-warp provides a modular CDC streaming platform with comprehensive monitoring and deployment capabilities.
+
+### 📊 Visual Architecture Guide
+
+- **[Architecture Overview](./docs/architecture-diagrams.md)** - Modular design and data processing flow diagrams
+- **[Connection Flow Example](./docs/connection-flow-example.md)** - End-to-end MongoDB → PostgreSQL CDC example  
+- **[Kubernetes Deployment](./docs/kubernetes-deployment.md)** - Production-ready Kubernetes deployment patterns
+
 See [PLAN.md](./PLAN.md) for detailed architecture and implementation plan.
 
 ## Development Status
