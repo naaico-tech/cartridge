@@ -30,6 +30,24 @@ from .factory import register_source_connector
 logger = structlog.get_logger(__name__)
 
 
+class MongoDBJSONEncoder(json.JSONEncoder):
+    """Custom JSON encoder for MongoDB types."""
+    
+    def default(self, obj):
+        if isinstance(obj, ObjectId):
+            return str(obj)
+        elif isinstance(obj, datetime):
+            return obj.isoformat()
+        elif isinstance(obj, Timestamp):
+            return obj.as_datetime().isoformat()
+        return super().default(obj)
+
+
+def mongo_json_dumps(obj):
+    """JSON dumps with MongoDB type support."""
+    return json.dumps(obj, cls=MongoDBJSONEncoder)
+
+
 class MongoDBTypeMapper:
     """Maps MongoDB BSON types to SQL column types."""
 
@@ -85,7 +103,7 @@ class MongoDBTypeMapper:
             Flattened document
         """
         if max_depth <= 0:
-            return {prefix.rstrip("_"): json.dumps(doc) if doc else None}
+            return {prefix.rstrip("_"): mongo_json_dumps(doc) if doc else None}
 
         flattened = {}
 
@@ -104,7 +122,7 @@ class MongoDBTypeMapper:
                     flattened[field_name] = None
             elif isinstance(value, list):
                 # Store arrays as JSON
-                flattened[field_name] = json.dumps(value) if value else None
+                flattened[field_name] = mongo_json_dumps(value) if value else None
             else:
                 flattened[field_name] = value
 

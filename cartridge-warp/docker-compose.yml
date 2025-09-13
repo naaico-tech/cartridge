@@ -20,7 +20,7 @@ services:
 
   # PostgreSQL destination database
   postgresql:
-    image: postgres:16
+    image: postgres:15-alpine
     container_name: cartridge-warp-postgresql
     ports:
       - "5432:5432"
@@ -68,23 +68,23 @@ services:
       - cartridge-warp
 
   # Cartridge-warp application
-  cartridge-warp:
-    build: .
-    container_name: cartridge-warp-app
-    ports:
-      - "8080:8080"
-    environment:
-      CARTRIDGE_WARP_SOURCE__CONNECTION_STRING: "mongodb://admin:password@mongodb:27017"
-      CARTRIDGE_WARP_DESTINATION__CONNECTION_STRING: "postgresql://cartridge:cartridge_password@postgresql:5432/warehouse"
-    volumes:
-      - ./examples:/app/examples:ro
-      - ./logs:/app/logs
-    depends_on:
-      - mongodb
-      - postgresql
-    networks:
-      - cartridge-warp
-    command: ["cartridge-warp", "validate", "--config", "examples/mongodb-to-postgresql-single.yaml"]
+  # cartridge-warp:
+  #   build: .
+  #   container_name: cartridge-warp-app
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     CARTRIDGE_WARP_SOURCE__CONNECTION_STRING: "mongodb://admin:password@mongodb:27017"
+  #     CARTRIDGE_WARP_DESTINATION__CONNECTION_STRING: "postgresql://cartridge:cartridge_password@postgresql:5432/warehouse"
+  #   volumes:
+  #     - ./examples:/app/examples:ro
+  #     - ./logs:/app/logs
+  #   depends_on:
+  #     - mongodb
+  #     - postgresql
+  #   networks:
+  #     - cartridge-warp
+  #   command: ["cartridge-warp", "validate", "--config", "examples/mongodb-to-postgresql-single.yaml"]
 
 volumes:
   mongodb_data:

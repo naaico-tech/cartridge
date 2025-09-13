@@ -23,6 +23,7 @@ from asyncpg.exceptions import (
     UniqueViolationError,
 )
 from dateutil.parser import isoparse
+from bson import ObjectId, Timestamp
 
 from .base import (
     BaseDestinationConnector,
@@ -36,6 +37,24 @@ from .base import (
 from .factory import register_destination_connector
 
 logger = structlog.get_logger(__name__)
+
+
+class MongoDBJSONEncoder(json.JSONEncoder):
+    """Custom JSON encoder for MongoDB types."""
+    
+    def default(self, obj):
+        if isinstance(obj, ObjectId):
+            return str(obj)
+        elif isinstance(obj, datetime):
+            return obj.isoformat()
+        elif isinstance(obj, Timestamp):
+            return obj.as_datetime().isoformat()
+        return super().default(obj)
+
+
+def safe_json_dumps(obj):
+    """JSON dumps with MongoDB type support."""
+    return json.dumps(obj, cls=MongoDBJSONEncoder)
 
 
 class PostgreSQLTypeMapper:
@@ -92,13 +111,13 @@ class PostgreSQLTypeMapper:
             
         if target_type == ColumnType.JSON:
             if isinstance(value, (dict, list)):
-                return json.dumps(value)
+                return safe_json_dumps(value)
             elif isinstance(value, str):
                 # Assume it's already JSON string
                 return value
             else:
                 # Convert other types to JSON
-                return json.dumps(value)
+                return safe_json_dumps(value)
                 
         elif target_type == ColumnType.TIMESTAMP:
             if isinstance(value, str):
@@ -290,6 +309,25 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
         except Exception as e:
             logger.error("PostgreSQL connection test failed", error=str(e))
             return False
+
+    def acquire(self):
+        """Acquire a connection from the pool.
+        
+        Returns:
+            Async context manager for connection acquisition
+        """
+        if not self.pool:
+            raise RuntimeError("Connection pool not initialized. Call connect() first.")
+        return self.pool.acquire()
+    
+    @property
+    def connection_pool(self) -> Optional[Pool]:
+        """Get the connection pool.
+        
+        Returns:
+            The asyncpg connection pool or None if not connected
+        """
+        return self.pool
 
     async def create_schema_if_not_exists(self, schema_name: str) -> None:
         """Create schema if it doesn't exist."""
@@ -950,7 +988,7 @@ class PostgreSQLDestinationConnector(BaseDestinationConnector):
             # Create markers table if needed
             await self._create_markers_table()
             
-            marker_value = json.dumps(marker) if marker is not None else None
+            marker_value = safe_json_dumps(marker) if marker is not None else None
             
             query = f'''
                 INSERT INTO "{self.metadata_schema}".processing_markers 

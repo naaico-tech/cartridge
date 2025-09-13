@@ -97,7 +97,7 @@ class MetadataManager:
         try:
             async with self.pool.acquire() as conn:
                 # Create schema and tables
-                for sql in get_schema_creation_sql():
+                for sql in get_schema_creation_sql(self.metadata_schema):
                     await conn.execute(sql)
                 
                 logger.info("Metadata tables created successfully")
@@ -116,7 +116,7 @@ class MetadataManager:
         logger.warning("Cleaning up metadata schema", schema=self.metadata_schema)
         
         async with self.pool.acquire() as conn:
-            for sql in get_schema_cleanup_sql():
+            for sql in get_schema_cleanup_sql(self.metadata_schema):
                 try:
                     await conn.execute(sql)
                 except Exception as e:
