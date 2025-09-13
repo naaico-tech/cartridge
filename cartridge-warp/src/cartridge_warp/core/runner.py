@@ -111,10 +111,18 @@ class WarpRunner:
         dest_connector = await self.connector_factory.create_destination_connector(
             self.config.destination
         )
+        
+        # Connect to get access to the pool
+        await dest_connector.connect()
 
-        # Initialize metadata manager
+        # Initialize metadata manager with the connection pool
+        # Use getattr to access connection_pool safely
+        connection_pool = getattr(dest_connector, 'connection_pool', None)
+        if not connection_pool:
+            raise RuntimeError("Destination connector does not provide a connection pool")
+            
         self.metadata_manager = MetadataManager(
-            dest_connector, self.config.destination.metadata_schema
+            connection_pool, self.config.destination.metadata_schema
         )
         await self.metadata_manager.initialize()
 
@@ -140,6 +148,10 @@ class WarpRunner:
         dest_connector = await self.connector_factory.create_destination_connector(
             self.config.destination
         )
+        
+        # Connect the connectors
+        await source_connector.connect()
+        await dest_connector.connect()
 
         # Create and run schema processor
         if not self.metadata_manager:

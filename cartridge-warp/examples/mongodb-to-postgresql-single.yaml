@@ -4,7 +4,7 @@ mode: single
 # Source: MongoDB
 source:
   type: mongodb
-  connection_string: "mongodb://localhost:27017"
+  connection_string: "mongodb://admin:password@localhost:27017/?authSource=admin"
   database: "ecommerce"
   
   # Change detection settings
@@ -15,7 +15,7 @@ source:
 # Destination: PostgreSQL  
 destination:
   type: postgresql
-  connection_string: "postgresql://user:password@localhost:5432/warehouse"
+  connection_string: "postgresql://cartridge:cartridge_password@localhost:5432/warehouse"
   database: "warehouse"
   metadata_schema: "cartridge_warp_metadata"
 

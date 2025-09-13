@@ -23,7 +23,7 @@ source:
 # Destination Database Configuration  
 destination:
   type: "postgresql"
-  connection_string: "postgresql://user:password@localhost:5432/warehouse"
+  connection_string: "postgresql://cartridge:cartridge_password@localhost:5432/warehouse"
   database: "warehouse"
   metadata_schema: "cartridge_warp_metadata"
 

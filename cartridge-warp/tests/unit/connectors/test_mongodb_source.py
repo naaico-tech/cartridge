@@ -213,7 +213,8 @@ class TestMongoDBSourceConnector:
         ]
 
         # Create a mock collection with proper method chaining
-        mock_collection = AsyncMock()
+        from unittest.mock import MagicMock
+        mock_collection = MagicMock()
         mock_collection.name = "test_collection"
 
         # Mock the find().limit() chain - return the actual sample docs
@@ -222,13 +223,11 @@ class TestMongoDBSourceConnector:
                 yield doc
 
         mock_find_cursor = AsyncMock()
-        mock_find_cursor.__aiter__ = lambda: async_find_iterator()
+        mock_find_cursor.__aiter__ = lambda self: async_find_iterator()
 
-        mock_limit_cursor = AsyncMock()
-        mock_limit_cursor.return_value = mock_find_cursor
-
-        mock_find_result = AsyncMock()
-        mock_find_result.limit = mock_limit_cursor
+        # Create proper method chaining with synchronous mocks
+        mock_find_result = MagicMock()
+        mock_find_result.limit.return_value = mock_find_cursor
 
         mock_collection.find.return_value = mock_find_result
 
@@ -268,16 +267,18 @@ class TestMongoDBSourceConnector:
         ]
 
         # Mock collection with proper method chaining
-        mock_collection = AsyncMock()
+        from unittest.mock import MagicMock
+        mock_collection = MagicMock()
 
         async def async_snapshot_iterator():
             for doc in sample_docs:
                 yield doc
 
         mock_batch_cursor = AsyncMock()
-        mock_batch_cursor.__aiter__ = lambda: async_snapshot_iterator()
+        mock_batch_cursor.__aiter__ = lambda self: async_snapshot_iterator()
 
-        mock_find_result = AsyncMock()
+        # Create proper method chaining with synchronous mocks
+        mock_find_result = MagicMock()
         mock_find_result.batch_size.return_value = mock_batch_cursor
         mock_collection.find.return_value = mock_find_result
 
@@ -444,22 +445,21 @@ class TestMongoDBSourceConnector:
         ]
 
         # Mock collection with proper method chaining
-        mock_collection = AsyncMock()
+        from unittest.mock import MagicMock
+        mock_collection = MagicMock()
 
         async def async_changes_iterator():
             for doc in sample_docs:
                 yield doc
 
         mock_final_cursor = AsyncMock()
-        mock_final_cursor.__aiter__ = lambda: async_changes_iterator()
+        mock_final_cursor.__aiter__ = lambda self: async_changes_iterator()
 
-        mock_limit_result = AsyncMock()
-        mock_limit_result.return_value = mock_final_cursor
+        # Create proper method chaining with synchronous mocks
+        mock_sort_result = MagicMock()
+        mock_sort_result.limit.return_value = mock_final_cursor
 
-        mock_sort_result = AsyncMock()
-        mock_sort_result.limit = mock_limit_result
-
-        mock_find_result = AsyncMock()
+        mock_find_result = MagicMock()
         mock_find_result.sort.return_value = mock_sort_result
         mock_collection.find.return_value = mock_find_result
 

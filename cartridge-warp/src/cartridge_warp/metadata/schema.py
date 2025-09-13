@@ -20,11 +20,12 @@ METADATA_TABLES_SQL = {
         position_data JSONB NOT NULL, -- LSN, resume token, timestamp, etc.
         last_updated TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
         sync_run_id UUID,
-        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-        
-        CONSTRAINT uk_sync_markers_schema_table_type 
-            UNIQUE (schema_name, COALESCE(table_name, ''), marker_type)
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
     );
+    
+    -- Create unique index instead of constraint with COALESCE
+    CREATE UNIQUE INDEX IF NOT EXISTS uk_sync_markers_schema_table_type 
+        ON cartridge_warp.sync_markers (schema_name, COALESCE(table_name, ''), marker_type);
     
     CREATE INDEX IF NOT EXISTS idx_sync_markers_schema_name ON cartridge_warp.sync_markers (schema_name);
     CREATE INDEX IF NOT EXISTS idx_sync_markers_table_name ON cartridge_warp.sync_markers (table_name);
@@ -184,34 +185,42 @@ TABLE_CREATION_ORDER = [
     "dead_letter_queue"
 ]
 
-def get_schema_creation_sql() -> List[str]:
+def get_schema_creation_sql(schema_name: str = "cartridge_warp") -> List[str]:
     """Get SQL statements for creating metadata schema in correct order.
+    
+    Args:
+        schema_name: Name of the schema to create (default: cartridge_warp)
     
     Returns:
         List of SQL statements to execute in order
     """
     statements = [
-        "CREATE SCHEMA IF NOT EXISTS cartridge_warp;",
-        "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+        f'CREATE SCHEMA IF NOT EXISTS "{schema_name}";',
+        f'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
     ]
     
     for table_name in TABLE_CREATION_ORDER:
         if table_name in METADATA_TABLES_SQL:
-            statements.append(METADATA_TABLES_SQL[table_name])
+            # Replace hardcoded schema name with the provided schema_name
+            sql = METADATA_TABLES_SQL[table_name].replace("cartridge_warp", schema_name)
+            statements.append(sql)
     
     return statements
 
-def get_schema_cleanup_sql() -> List[str]:
+def get_schema_cleanup_sql(schema_name: str = "cartridge_warp") -> List[str]:
     """Get SQL statements for cleaning up metadata schema.
+    
+    Args:
+        schema_name: Name of the schema to clean up (default: cartridge_warp)
     
     Returns:
         List of SQL statements to execute for cleanup
     """
     return [
-        "DROP TABLE IF EXISTS cartridge_warp.dead_letter_queue CASCADE;",
-        "DROP TABLE IF EXISTS cartridge_warp.error_log CASCADE;",
-        "DROP TABLE IF EXISTS cartridge_warp.schema_registry CASCADE;",
-        "DROP TABLE IF EXISTS cartridge_warp.sync_markers CASCADE;",
-        "DROP TABLE IF EXISTS cartridge_warp.sync_runs CASCADE;",
-        "DROP SCHEMA IF EXISTS cartridge_warp CASCADE;"
+        f'DROP TABLE IF EXISTS "{schema_name}".dead_letter_queue CASCADE;',
+        f'DROP TABLE IF EXISTS "{schema_name}".error_log CASCADE;',
+        f'DROP TABLE IF EXISTS "{schema_name}".schema_registry CASCADE;',
+        f'DROP TABLE IF EXISTS "{schema_name}".sync_markers CASCADE;',
+        f'DROP TABLE IF EXISTS "{schema_name}".sync_runs CASCADE;',
+        f'DROP SCHEMA IF EXISTS "{schema_name}" CASCADE;'
     ]

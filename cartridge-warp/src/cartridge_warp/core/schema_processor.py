@@ -144,7 +144,7 @@ class SchemaProcessor:
                 batch_size = table_config.stream_batch_size
                 change_count = 0
 
-                changes_iter = await self.source_connector.get_changes(
+                changes_iter = self.source_connector.get_changes(
                     self.schema_name, last_marker, batch_size
                 )
                 async for change_event in changes_iter:
@@ -205,7 +205,7 @@ class SchemaProcessor:
             batch_size = table_config.stream_batch_size
             change_count = 0
 
-            changes_iter = await self.source_connector.get_changes(
+            changes_iter = self.source_connector.get_changes(
                 self.schema_name, last_marker, batch_size
             )
             async for change_event in changes_iter:
