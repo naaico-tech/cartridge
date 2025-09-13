@@ -196,7 +196,7 @@ def get_schema_creation_sql(schema_name: str = "cartridge_warp") -> List[str]:
     """
     statements = [
         f'CREATE SCHEMA IF NOT EXISTS "{schema_name}";',
-        'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+        f'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
     ]
     
     for table_name in TABLE_CREATION_ORDER:
