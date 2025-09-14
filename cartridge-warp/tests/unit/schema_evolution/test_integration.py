@@ -350,8 +350,8 @@ class TestSchemaEvolutionIntegration:
         # Check health
         health = await engine.health_check()
         
-        assert health["running"] == True
-        assert health["enabled"] == True
+        assert health["running"] is True
+        assert health["enabled"] is True
         assert "metrics" in health
         assert "detector_stats" in health
         
@@ -360,7 +360,7 @@ class TestSchemaEvolutionIntegration:
         
         # Check health after stop
         health_after_stop = await engine.health_check()
-        assert health_after_stop["running"] == False
+        assert health_after_stop["running"] is False
         
     @pytest.mark.asyncio
     async def test_concurrent_evolution_limits(self, mock_connectors):

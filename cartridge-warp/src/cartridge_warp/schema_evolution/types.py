@@ -2,43 +2,58 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, TypedDict, Tuple
 
 from ..connectors.base import ColumnType
 
 
 class EvolutionStrategy(Enum):
-    """Strategy for handling schema evolution."""
+    """Strategy for schema evolution behavior."""
     
-    STRICT = "strict"  # Fail on any incompatible changes
-    PERMISSIVE = "permissive"  # Allow all changes with warnings
-    CONSERVATIVE = "conservative"  # Allow safe changes, warn on risky ones
-    AGGRESSIVE = "aggressive"  # Apply all possible conversions
-
-
-class SchemaChangeType(Enum):
-    """Types of schema changes that can occur."""
-    
-    ADD_COLUMN = "add_column"
-    DROP_COLUMN = "drop_column" 
-    MODIFY_COLUMN_TYPE = "modify_column_type"
-    RENAME_COLUMN = "rename_column"
-    ADD_TABLE = "add_table"
-    DROP_TABLE = "drop_table"
-    RENAME_TABLE = "rename_table"
-    ADD_INDEX = "add_index"
-    DROP_INDEX = "drop_index"
-    ADD_CONSTRAINT = "add_constraint"
-    DROP_CONSTRAINT = "drop_constraint"
+    STRICT = "strict"  # Manual intervention for all changes
+    CONSERVATIVE = "conservative"  # Safe changes auto, risky require approval
+    PERMISSIVE = "permissive"  # Most changes auto, warn on risky
+    AGGRESSIVE = "aggressive"  # All changes auto with fallbacks
 
 
 class ConversionSafety(Enum):
-    """Safety level of type conversions."""
+    """Safety level for type conversions."""
     
-    SAFE = "safe"  # No data loss possible
-    RISKY = "risky"  # Potential data loss or truncation
-    DANGEROUS = "dangerous"  # High probability of data loss
-    INCOMPATIBLE = "incompatible"  # Cannot convert
+    SAFE = "safe"  # No data loss, always allowed
+    RISKY = "risky"  # Potential data loss, requires validation
+    DANGEROUS = "dangerous"  # High risk of data loss, requires approval
+    INCOMPATIBLE = "incompatible"  # Cannot convert, blocked
+
+
+class SchemaChangeType(Enum):
+    """Types of schema changes that can be detected."""
+    
+    TABLE_ADDED = "table_added"
+    TABLE_REMOVED = "table_removed"
+    COLUMN_ADDED = "column_added"
+    COLUMN_REMOVED = "column_removed"
+    COLUMN_TYPE_CHANGED = "column_type_changed"
+    CONSTRAINT_ADDED = "constraint_added"
+    CONSTRAINT_REMOVED = "constraint_removed"
+
+
+class SchemaDefinition(TypedDict):
+    """Typed structure for schema definitions."""
+    
+    name: str
+    type: str
+    nullable: bool
+    primary_key: bool
+    constraints: list[str]
+
+
+class TableDefinition(TypedDict):
+    """Typed structure for table definitions."""
+    
+    name: str
+    columns: dict[str, SchemaDefinition]
+    constraints: list[str]
+    indexes: list[str]
 
 
 @dataclass
@@ -83,8 +98,8 @@ class SchemaEvolutionEvent:
     schema_name: str
     table_name: str
     column_name: Optional[str] = None
-    old_definition: Optional[dict[str, Any]] = None
-    new_definition: Optional[dict[str, Any]] = None
+    old_definition: Optional[TableDefinition] = None
+    new_definition: Optional[TableDefinition] = None
     conversion_rule: Optional[ConversionRule] = None
     requires_approval: bool = False
     safety_level: ConversionSafety = ConversionSafety.SAFE

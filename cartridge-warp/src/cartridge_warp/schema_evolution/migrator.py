@@ -361,12 +361,13 @@ class SchemaMigrationEngine:
         
     async def _execute_sql_command(self, sql_command: str, schema_name: str) -> None:
         """Execute a SQL command through the destination connector."""
-        # This would use the destination connector's execute method
-        # For now, we'll log the command
         self.logger.info("Executing SQL command", sql=sql_command, schema=schema_name)
         
-        # TODO: Implement actual SQL execution through connector
-        # await self.destination_connector.execute_sql(sql_command)
+        # For now, we'll just log the command as a placeholder
+        # In a real implementation, this would be integrated with the destination connector
+        # through the apply_schema_changes method or a dedicated SQL execution interface
+        self.logger.warning("SQL execution not implemented - logging command only", 
+                          sql=sql_command)
         
     async def _execute_rollback(self, rollback_commands: List[str], schema_name: str) -> None:
         """Execute rollback commands."""
@@ -443,11 +444,18 @@ class SchemaMigrationEngine:
         
     def _validate_type_conversion(self, event: SchemaEvolutionEvent) -> bool:
         """Validate that a type conversion is possible."""
-        if not event.old_definition or not event.new_definition:
+        if not event.old_definition or not event.new_definition or not event.column_name:
+            return False
+        
+        # For column type changes, we need to look at the specific column definition
+        old_column = event.old_definition.get("columns", {}).get(event.column_name)
+        new_column = event.new_definition.get("columns", {}).get(event.column_name)
+        
+        if not old_column or not new_column:
             return False
             
-        old_type_str = event.old_definition["type"]
-        new_type_str = event.new_definition["type"]
+        old_type_str = old_column.get("type", "")
+        new_type_str = new_column.get("type", "")
         
         try:
             old_type = ColumnType(old_type_str)

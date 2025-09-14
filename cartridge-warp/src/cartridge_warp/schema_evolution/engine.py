@@ -345,9 +345,12 @@ class SchemaEvolutionEngine:
                 
         # Report metrics if collector available  
         if self.metrics_collector:
-            # TODO: Add record_evolution_metrics method to MetricsCollector
-            # self.metrics_collector.record_evolution_metrics(self.metrics)
-            pass
+            # Record evolution metrics through structured logging for now
+            # In a real implementation, this would integrate with the actual metrics collector
+            self.logger.info("Recording evolution metrics", 
+                           total_changes_detected=self.metrics.total_changes_detected,
+                           changes_applied_successfully=self.metrics.changes_applied_successfully,
+                           changes_failed=self.metrics.changes_failed)
             
     async def _record_evolution_event(self, schema_name: str, result: EvolutionResult) -> None:
         """Record evolution event in metadata system."""

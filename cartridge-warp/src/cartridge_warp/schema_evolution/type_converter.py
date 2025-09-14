@@ -3,7 +3,7 @@
 import json
 import logging
 from decimal import Decimal, InvalidOperation
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
@@ -18,7 +18,7 @@ class TypeConversionEngine:
     
     def __init__(self):
         """Initialize the type conversion engine with default rules."""
-        self.conversion_rules: Dict[tuple[ColumnType, ColumnType], ConversionRule] = {}
+        self.conversion_rules: Dict[Tuple[ColumnType, ColumnType], ConversionRule] = {}
         self.fallback_functions: Dict[ColumnType, Any] = {}
         self._setup_default_rules()
         

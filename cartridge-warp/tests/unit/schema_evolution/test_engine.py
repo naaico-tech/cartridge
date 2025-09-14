@@ -102,8 +102,8 @@ class TestTypeConversionEngine:
         converter.add_rule(custom_rule)
         
         # Test custom conversion
-        assert converter.convert_value("true", ColumnType.STRING, ColumnType.BOOLEAN) == True
-        assert converter.convert_value("false", ColumnType.STRING, ColumnType.BOOLEAN) == False
+        assert converter.convert_value("true", ColumnType.STRING, ColumnType.BOOLEAN) is True
+        assert converter.convert_value("false", ColumnType.STRING, ColumnType.BOOLEAN) is False
 
 
 class TestSchemaChangeDetector:
@@ -271,7 +271,7 @@ class TestSchemaChangeDetector:
         assert len(events) == 1
         assert events[0].change_type == SchemaChangeType.MODIFY_COLUMN_TYPE
         assert events[0].safety_level == ConversionSafety.DANGEROUS
-        assert events[0].requires_approval == True
+        assert events[0].requires_approval is True
         
     @pytest.mark.asyncio
     async def test_excluded_tables_filtering(self):
@@ -519,7 +519,7 @@ class TestSchemaEvolutionEngine:
         assert "metrics" in health
         assert "detector_stats" in health
         
-        assert health["enabled"] == True
+        assert health["enabled"] is True
         assert health["strategy"] == "conservative"
         
     def test_metrics_tracking(self, evolution_engine):
