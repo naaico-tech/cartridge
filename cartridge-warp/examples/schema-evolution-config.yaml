@@ -1,0 +1,95 @@
+# Example configuration for schema evolution engine
+
+# Schema evolution configuration
+schema_evolution: &schema_evolution
+  enabled: true
+  strategy: "conservative"  # Options: strict, conservative, permissive, aggressive
+  
+  # Change detection settings
+  detection_interval_seconds: 30
+  detect_column_additions: true
+  detect_column_removals: true
+  detect_type_changes: true
+  detect_constraint_changes: false
+  detect_index_changes: false
+  
+  # Type conversion settings
+  enable_type_widening: true         # int -> bigint, float -> double
+  enable_type_narrowing: false       # bigint -> int (risky)
+  enable_object_to_json: true        # Complex objects -> JSONB
+  enable_fallback_to_varchar: true   # Unknown types -> VARCHAR
+  
+  # Safety settings
+  require_approval_for_risky_changes: true
+  require_approval_for_dangerous_changes: true
+  max_data_loss_percentage: 0.01     # 0.01% max acceptable data loss
+  enable_rollback: true
+  
+  # Performance settings
+  max_concurrent_migrations: 1
+  migration_timeout_seconds: 300
+  batch_size: 1000
+  
+  # Table-specific overrides
+  table_configs:
+    critical_table:
+      enabled: true
+      strategy: "strict"              # Override global strategy
+      allow_column_additions: true
+      allow_column_removals: false
+      allow_type_changes: false
+      max_data_loss_percentage: 0.0   # No data loss allowed
+    analytics_table:
+      enabled: true
+      strategy: "permissive"
+      allow_column_additions: true
+      allow_column_removals: true
+      allow_type_changes: true
+      max_data_loss_percentage: 5.0   # Higher tolerance for analytics
+  
+  # Excluded items
+  excluded_tables: 
+    - "temp_data"
+    - "logs"
+    - "cache"
+  excluded_columns:
+    users: 
+      - "internal_notes"
+      - "debug_info"
+    products: 
+      - "temp_field"
+  
+  # Notification settings
+  notify_on_schema_changes: true
+  notification_webhooks:
+    - "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+  
+  # Logging and monitoring
+  log_all_changes: true
+  metrics_enabled: true
+
+# Integration with cartridge-warp configuration
+sources:
+  - type: "mongodb"
+    connection:
+      uri: "mongodb://localhost:27017"
+      database: "ecommerce"
+
+destination:
+  type: "postgresql"
+  connection:
+    host: "localhost"
+    port: 5432
+    database: "warehouse"
+    user: "postgres"
+    password: "password"
+
+schemas:
+  - name: "ecommerce"
+    mode: "stream"
+    tables: 
+      - "products"
+      - "orders" 
+      - "customers"
+    # Schema evolution configuration reference
+    schema_evolution: *schema_evolution
