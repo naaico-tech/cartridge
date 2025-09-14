@@ -444,18 +444,15 @@ class SchemaMigrationEngine:
         
     def _validate_type_conversion(self, event: SchemaEvolutionEvent) -> bool:
         """Validate that a type conversion is possible."""
-        if not event.old_definition or not event.new_definition or not event.column_name:
+        if not event.old_definition or not event.new_definition:
             return False
         
-        # For column type changes, we need to look at the specific column definition
-        old_column = event.old_definition.get("columns", {}).get(event.column_name)
-        new_column = event.new_definition.get("columns", {}).get(event.column_name)
+        # For column type changes, the definitions contain direct column data
+        old_type_str = event.old_definition.get("type", "")
+        new_type_str = event.new_definition.get("type", "")
         
-        if not old_column or not new_column:
+        if not old_type_str or not new_type_str:
             return False
-            
-        old_type_str = old_column.get("type", "")
-        new_type_str = new_column.get("type", "")
         
         try:
             old_type = ColumnType(old_type_str)

@@ -28,13 +28,24 @@ class ConversionSafety(Enum):
 class SchemaChangeType(Enum):
     """Types of schema changes that can be detected."""
     
-    TABLE_ADDED = "table_added"
-    TABLE_REMOVED = "table_removed"
-    COLUMN_ADDED = "column_added"
-    COLUMN_REMOVED = "column_removed"
-    COLUMN_TYPE_CHANGED = "column_type_changed"
-    CONSTRAINT_ADDED = "constraint_added"
-    CONSTRAINT_REMOVED = "constraint_removed"
+    # Table changes
+    ADD_TABLE = "add_table"
+    DROP_TABLE = "drop_table"
+    
+    # Column changes
+    ADD_COLUMN = "add_column"
+    DROP_COLUMN = "drop_column"
+    MODIFY_COLUMN_TYPE = "modify_column_type"
+    MODIFY_COLUMN_CONSTRAINT = "modify_column_constraint"
+    RENAME_COLUMN = "rename_column"
+    
+    # Index changes
+    ADD_INDEX = "add_index"
+    DROP_INDEX = "drop_index"
+    
+    # Constraint changes
+    ADD_CONSTRAINT = "add_constraint"
+    DROP_CONSTRAINT = "drop_constraint"
 
 
 class SchemaDefinition(TypedDict):
