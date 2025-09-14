@@ -13,7 +13,7 @@ from .config import SchemaEvolutionConfig, EvolutionMetrics
 from .detector import SchemaChangeDetector
 from .migrator import SchemaMigrationEngine
 from .type_converter import TypeConversionEngine
-from .types import EvolutionResult, SchemaEvolutionEvent
+from .types import EvolutionResult, SchemaEvolutionEvent, HealthStatus
 
 logger = structlog.get_logger(__name__)
 
@@ -113,6 +113,9 @@ class SchemaEvolutionEngine:
             Result of the evolution operation
         """
         start_time = datetime.now()
+        
+        # Track when we last checked for changes
+        self.metrics.last_check = start_time
         
         self.logger.info("Starting schema evolution", 
                         schema=schema_name, 
@@ -387,13 +390,14 @@ class SchemaEvolutionEngine:
         """Reset evolution metrics."""
         self.metrics = EvolutionMetrics()
         
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> HealthStatus:
         """Perform health check of schema evolution engine."""
-        health = {
+        health_status: HealthStatus = {
             "running": self.running,
             "enabled": self.config.enabled,
             "strategy": self.config.strategy.value,
-            "detection_interval_seconds": self.config.detection_interval_seconds,
+            "schemas_monitored": len(await self._get_monitored_schemas()),
+            "last_check": self.metrics.last_check.isoformat() if self.metrics.last_check else None,
             "metrics": {
                 "total_changes_detected": self.metrics.total_changes_detected,
                 "changes_applied_successfully": self.metrics.changes_applied_successfully,
@@ -402,10 +406,17 @@ class SchemaEvolutionEngine:
             }
         }
         
-        # Add component health
+        # Add component health with detector stats
         try:
-            health["detector_stats"] = self.change_detector.get_detection_stats()
+            # Get detector stats if available, otherwise use defaults
+            detector_stats = getattr(self.change_detector, 'get_detection_stats', lambda: {
+                "cache_hits": 0, "cache_misses": 0, "total_comparisons": 0
+            })()
+            health_status["detector_stats"] = detector_stats
         except Exception as e:
-            health["detector_error"] = str(e)
+            # Fallback detector stats in case of error
+            health_status["detector_stats"] = {
+                "cache_hits": 0, "cache_misses": 0, "total_comparisons": 0, "error": str(e)
+            }
             
-        return health
+        return health_status

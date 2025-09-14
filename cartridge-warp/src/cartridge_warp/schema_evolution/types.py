@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Optional, TypedDict, Tuple
+from typing import Any, Callable, Dict, Optional, TypedDict, Tuple, Union
 
 from ..connectors.base import ColumnType
 
@@ -65,6 +65,21 @@ class TableDefinition(TypedDict):
     columns: dict[str, SchemaDefinition]
     constraints: list[str]
     indexes: list[str]
+
+
+class HealthStatus(TypedDict, total=False):
+    """Typed structure for engine health status."""
+    
+    # Required fields
+    running: bool
+    enabled: bool
+    strategy: str
+    schemas_monitored: int
+    last_check: Optional[str]
+    metrics: Dict[str, Union[int, float]]
+    
+    # Optional fields
+    detector_stats: Dict[str, Union[int, str]]
 
 
 @dataclass

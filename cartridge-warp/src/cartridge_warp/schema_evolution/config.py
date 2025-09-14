@@ -1,6 +1,7 @@
 """Configuration for schema evolution engine."""
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
@@ -92,6 +93,7 @@ class EvolutionMetrics:
     changes_failed: int = 0
     changes_requiring_approval: int = 0
     total_processing_time_seconds: float = 0.0
+    last_check: Optional[datetime] = None
     
     # By change type
     column_additions: int = 0
