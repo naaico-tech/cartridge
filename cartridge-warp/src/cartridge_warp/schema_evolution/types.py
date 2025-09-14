@@ -55,16 +55,16 @@ class SchemaDefinition(TypedDict):
     type: str
     nullable: bool
     primary_key: bool
-    constraints: list[str]
+    constraints: List[str]
 
 
 class TableDefinition(TypedDict):
     """Typed structure for table definitions."""
     
     name: str
-    columns: dict[str, SchemaDefinition]
-    constraints: list[str]
-    indexes: list[str]
+    columns: Dict[str, SchemaDefinition]
+    constraints: List[str]
+    indexes: List[str]
 
 
 class HealthStatus(TypedDict, total=False):
