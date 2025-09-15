@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, Optional, TypedDict, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, TypedDict, Tuple, Union
 
 from ..connectors.base import ColumnType
 
@@ -79,7 +79,41 @@ class HealthStatus(TypedDict, total=False):
     metrics: Dict[str, Union[int, float]]
     
     # Optional fields
-    detector_stats: Dict[str, Union[int, str]]
+    detector_stats: Dict[str, Union[int, str, float]]
+
+
+class MigrationRecord(TypedDict):
+    """Typed structure for migration history records."""
+    
+    id: str
+    schema_name: str
+    timestamp: str
+    event_type: str
+    success: bool
+    sql_executed: str
+    rollback_sql: Optional[str]
+    processing_time_seconds: float
+
+
+class ValidationResult(TypedDict):
+    """Typed structure for migration validation results."""
+    
+    valid: bool
+    warnings: List[str]
+    errors: List[str]
+    estimated_duration_seconds: float
+    risk_level: str
+
+
+class MigrationResult(TypedDict):
+    """Typed structure for individual migration execution results."""
+    
+    success: bool
+    event_id: str
+    sql_executed: Optional[str]
+    rollback_sql: Optional[str]
+    error_message: Optional[str]
+    processing_time_seconds: float
 
 
 @dataclass
@@ -124,8 +158,8 @@ class SchemaEvolutionEvent:
     schema_name: str
     table_name: str
     column_name: Optional[str] = None
-    old_definition: Optional[TableDefinition] = None
-    new_definition: Optional[TableDefinition] = None
+    old_definition: Optional[Dict[str, Any]] = None  # Column definition dict
+    new_definition: Optional[Dict[str, Any]] = None  # Column definition dict
     conversion_rule: Optional[ConversionRule] = None
     requires_approval: bool = False
     safety_level: ConversionSafety = ConversionSafety.SAFE

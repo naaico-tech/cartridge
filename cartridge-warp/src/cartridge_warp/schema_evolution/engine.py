@@ -162,7 +162,7 @@ class SchemaEvolutionEngine:
             result = await self.migrator.execute_migrations(filtered_events, schema_name, dry_run)
             
             # Update metrics
-            self._update_metrics(result)
+            self._update_metrics(result, schema_name)
             
             # Record evolution event in metadata
             if not dry_run:
@@ -312,7 +312,7 @@ class SchemaEvolutionEngine:
             
         return filtered
         
-    def _update_metrics(self, result: EvolutionResult) -> None:
+    def _update_metrics(self, result: EvolutionResult, schema_name: str) -> None:
         """Update evolution metrics."""
         self.metrics.total_changes_detected += len(result.events)
         
@@ -348,12 +348,36 @@ class SchemaEvolutionEngine:
                 
         # Report metrics if collector available  
         if self.metrics_collector:
-            # Record evolution metrics through structured logging for now
-            # In a real implementation, this would integrate with the actual metrics collector
-            self.logger.info("Recording evolution metrics", 
-                           total_changes_detected=self.metrics.total_changes_detected,
-                           changes_applied_successfully=self.metrics.changes_applied_successfully,
-                           changes_failed=self.metrics.changes_failed)
+            # Record evolution metrics through the metrics collector
+            try:
+                # Record schema changes by type and safety level
+                for event in result.events:
+                    self.metrics_collector.increment_schema_changes(
+                        schema_name=schema_name,
+                        table_name=event.table_name,
+                        change_type=event.change_type.value
+                    )
+                
+                # Record any errors
+                for error in result.errors:
+                    self.metrics_collector.increment_error_count(
+                        schema_name=schema_name,
+                        table_name="",  # Error may not be table-specific
+                        error_type="schema_evolution_error"
+                    )
+                    
+                self.logger.info("Recorded evolution metrics", 
+                               schema=schema_name,
+                               changes_recorded=len(result.events),
+                               errors_recorded=len(result.errors))
+                               
+            except Exception as e:
+                # Fallback to structured logging if metrics recording fails
+                self.logger.warning("Failed to record metrics, using fallback logging", error=str(e))
+                self.logger.info("Recording evolution metrics", 
+                               total_changes_detected=self.metrics.total_changes_detected,
+                               changes_applied_successfully=self.metrics.changes_applied_successfully,
+                               changes_failed=self.metrics.changes_failed)
             
     async def _record_evolution_event(self, schema_name: str, result: EvolutionResult) -> None:
         """Record evolution event in metadata system."""
@@ -412,7 +436,8 @@ class SchemaEvolutionEngine:
             detector_stats = getattr(self.change_detector, 'get_detection_stats', lambda: {
                 "cache_hits": 0, "cache_misses": 0, "total_comparisons": 0
             })()
-            health_status["detector_stats"] = detector_stats
+            # Ensure detector stats match expected types
+            health_status["detector_stats"] = dict(detector_stats)
         except Exception as e:
             # Fallback detector stats in case of error
             health_status["detector_stats"] = {

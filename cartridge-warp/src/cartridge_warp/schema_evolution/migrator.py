@@ -9,10 +9,13 @@ import structlog
 from ..connectors.base import ColumnDefinition, ColumnType, DestinationConnector
 from .config import SchemaEvolutionConfig
 from .types import (
-    SchemaEvolutionEvent, 
+    ConversionSafety, 
+    EvolutionResult, 
     SchemaChangeType, 
-    ConversionSafety,
-    EvolutionResult
+    SchemaEvolutionEvent,
+    MigrationRecord,
+    ValidationResult,
+    MigrationResult
 )
 from .type_converter import TypeConversionEngine
 
@@ -42,7 +45,7 @@ class SchemaMigrationEngine:
         
         # Track ongoing migrations
         self._active_migrations: Dict[str, asyncio.Task] = {}
-        self._migration_history: List[Dict[str, Any]] = []
+        self._migration_history: List[MigrationRecord] = []
         
     async def execute_migrations(
         self, 
@@ -149,7 +152,7 @@ class SchemaMigrationEngine:
                             
         return result
         
-    async def _validate_migrations(self, events: List[SchemaEvolutionEvent], schema_name: str) -> Dict[str, Any]:
+    async def _validate_migrations(self, events: List[SchemaEvolutionEvent], schema_name: str) -> ValidationResult:
         """Validate that migrations can be safely executed."""
         result = {
             "valid": True,
@@ -181,7 +184,16 @@ class SchemaMigrationEngine:
                     result["valid"] = False
                     result["errors"].append(f"Invalid type conversion for {event.column_name}")
                     
-        return result
+        # Convert to proper ValidationResult format
+        validation_result: ValidationResult = {
+            "valid": result["valid"],
+            "warnings": result["warnings"],
+            "errors": result["errors"],
+            "estimated_duration_seconds": 0.0,  # Could be calculated based on events
+            "risk_level": "high" if not result["valid"] else "low"
+        }
+        
+        return validation_result
         
     def _sort_events_by_priority(self, events: List[SchemaEvolutionEvent]) -> List[SchemaEvolutionEvent]:
         """Sort events by execution priority (safe changes first)."""
@@ -244,14 +256,17 @@ class SchemaMigrationEngine:
             result["rollback"] = rollback_commands
             
             # Record migration in history
-            self._migration_history.append({
+            migration_record: MigrationRecord = {
                 "id": migration_id,
-                "event": event,
-                "timestamp": datetime.now(),
-                "commands": result["commands"],
-                "rollback": result["rollback"],
-                "success": len(result["errors"]) == 0
-            })
+                "schema_name": schema_name,
+                "timestamp": datetime.now().isoformat(),
+                "event_type": event.change_type.value,
+                "success": len(result["errors"]) == 0,
+                "sql_executed": str(result["commands"]),
+                "rollback_sql": str(result["rollback"]) if result["rollback"] else None,
+                "processing_time_seconds": 0.0  # Could be calculated if needed
+            }
+            self._migration_history.append(migration_record)
             
         except Exception as e:
             result["errors"].append(f"Migration execution error: {str(e)}")
@@ -363,11 +378,29 @@ class SchemaMigrationEngine:
         """Execute a SQL command through the destination connector."""
         self.logger.info("Executing SQL command", sql=sql_command, schema=schema_name)
         
-        # For now, we'll just log the command as a placeholder
-        # In a real implementation, this would be integrated with the destination connector
-        # through the apply_schema_changes method or a dedicated SQL execution interface
-        self.logger.warning("SQL execution not implemented - logging command only", 
-                          sql=sql_command)
+        try:
+            # Use the destination connector's apply_schema_changes method
+            # We need to convert our SQL command to a SchemaChange object
+            from ..connectors.base import SchemaChange
+            from datetime import datetime
+            
+            # Create a schema change object representing our migration
+            schema_change = SchemaChange(
+                schema_name=schema_name,
+                table_name="",  # This could be extracted from SQL if needed
+                change_type="migration_sql",
+                details={"sql_command": sql_command},
+                timestamp=datetime.now()
+            )
+            
+            await self.destination_connector.apply_schema_changes(schema_name, [schema_change])
+            self.logger.info("SQL command executed successfully", sql=sql_command[:100])
+            
+        except Exception as e:
+            self.logger.error("Failed to execute SQL command", 
+                            sql=sql_command[:100], 
+                            error=str(e))
+            raise
         
     async def _execute_rollback(self, rollback_commands: List[str], schema_name: str) -> None:
         """Execute rollback commands."""
