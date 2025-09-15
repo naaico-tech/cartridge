@@ -1,7 +1,7 @@
 """Schema processor for handling individual schema synchronization."""
 
 import asyncio
-from typing import Any
+from typing import Any, Optional
 
 import structlog
 
@@ -15,6 +15,8 @@ from ..connectors.base import (
 from ..core.config import SchemaConfig, TableConfig
 from ..metadata.manager import MetadataManager
 from ..monitoring.metrics import MetricsCollector
+from ..schema_evolution.engine import SchemaEvolutionEngine
+from ..schema_evolution.config import SchemaEvolutionConfig
 
 logger = structlog.get_logger(__name__)
 
@@ -29,6 +31,7 @@ class SchemaProcessor:
         destination_connector: DestinationConnector,
         metadata_manager: MetadataManager,
         metrics_collector: MetricsCollector,
+        evolution_config: Optional[SchemaEvolutionConfig] = None,
     ):
         """Initialize the schema processor.
 
@@ -38,6 +41,7 @@ class SchemaProcessor:
             destination_connector: Destination database connector
             metadata_manager: Manager for sync metadata
             metrics_collector: Metrics collection instance
+            evolution_config: Optional schema evolution configuration
         """
         self.schema_config = schema_config
         self.source_connector = source_connector
@@ -48,6 +52,17 @@ class SchemaProcessor:
         self.schema_name = schema_config.name
         self.running = False
         self.tasks: dict[str, asyncio.Task] = {}
+
+        # Initialize schema evolution engine if configured
+        self.evolution_engine: Optional[SchemaEvolutionEngine] = None
+        if evolution_config and evolution_config.enabled:
+            self.evolution_engine = SchemaEvolutionEngine(
+                config=evolution_config,
+                source_connector=source_connector,
+                destination_connector=destination_connector,
+                metadata_manager=metadata_manager,
+                metrics_collector=metrics_collector
+            )
 
         # Logger with context
         self.logger = logger.bind(schema=self.schema_name)
@@ -66,6 +81,11 @@ class SchemaProcessor:
         self.running = True
 
         try:
+            # Start schema evolution engine if configured
+            if self.evolution_engine:
+                await self.evolution_engine.start()
+                self.logger.info("Schema evolution engine started")
+
             # Ensure destination schema exists
             await self.destination_connector.create_schema_if_not_exists(
                 self.schema_name
@@ -73,6 +93,19 @@ class SchemaProcessor:
 
             # Get current schema from source
             source_schema = await self.source_connector.get_schema(self.schema_name)
+
+            # Perform schema evolution check if enabled
+            if self.evolution_engine:
+                evolution_result = await self.evolution_engine.evolve_schema(
+                    self.schema_name, 
+                    force_check=True
+                )
+                if not evolution_result.success:
+                    self.logger.warning("Schema evolution failed", 
+                                      errors=evolution_result.errors)
+                elif evolution_result.applied_changes:
+                    self.logger.info("Schema evolution applied changes",
+                                   changes=len(evolution_result.applied_changes))
 
             # Process each table
             for table in source_schema.tables:
@@ -119,6 +152,12 @@ class SchemaProcessor:
             await asyncio.gather(*self.tasks.values(), return_exceptions=True)
 
         self.tasks.clear()
+
+        # Stop schema evolution engine if running
+        if self.evolution_engine:
+            await self.evolution_engine.stop()
+            self.logger.info("Schema evolution engine stopped")
+
         self.logger.info("Schema processor stopped")
 
     async def _process_table_changes(
