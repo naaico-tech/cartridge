@@ -24,40 +24,40 @@ classifiers = [
 
 dependencies = [
     # Core framework
-    "fastapi==0.109.2",
-    "uvicorn[standard]==0.27.1",
-    "pydantic==2.6.1",
-    "pydantic-settings==2.1.0",
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "pydantic-settings",
     
     # Database and ORM
-    "sqlalchemy==2.0.25",
-    "alembic==1.13.1",
-    "asyncpg==0.29.0",
-    "psycopg2-binary==2.9.9",
-    "greenlet==3.0.3",
+    "sqlalchemy",
+    "alembic",
+    "asyncpg",
+    "psycopg2-binary",
+    "greenlet",
     
     # Database connectors (only implemented ones)
-    "google-cloud-bigquery==3.17.2",
+    "google-cloud-bigquery",
     
     # AI providers
-    "openai==1.12.0",
-    "anthropic==0.18.1",
-    "google-generativeai==0.4.0",
+    "openai",
+    "anthropic",
+    "google-generativeai",
     
     # Task queue and caching
-    "celery==5.3.6",
-    "redis==5.0.1",
+    "celery",
+    "redis",
     
     # File handling and templates
-    "jinja2==3.1.3",
-    "pyyaml==6.0.1",
+    "jinja2",
+    "pyyaml",
     
     # CLI utilities
-    "click==8.1.7",
-    "rich==13.7.0",
-    "structlog==24.1.0",
-    "python-multipart==0.0.9",
-    "httpx==0.26.0",
+    "click",
+    "rich",
+    "structlog",
+    "python-multipart",
+    "httpx",
 ]
 
 [project.optional-dependencies]
