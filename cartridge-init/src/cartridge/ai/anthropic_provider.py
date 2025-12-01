@@ -5,7 +5,7 @@ import anthropic
 
 from cartridge.ai.base import (
     AIProvider, ModelGenerationRequest, ModelGenerationResult, 
-    GeneratedModel, GeneratedTest, TableMapping, ModelType
+    GeneratedModel, GeneratedTest, TableMapping, ModelType, ProjectContext
 )
 from cartridge.core.config import settings
 from cartridge.core.logging import get_logger
@@ -28,6 +28,90 @@ class AnthropicProvider(AIProvider):
         self.model = config.get("model", "claude-3-sonnet-20240229")
         self.max_tokens = config.get("max_tokens", 4000)
         self.temperature = config.get("temperature", 0.1)
+    
+    async def generate_execution_plan(self, request: ModelGenerationRequest) -> "ExecutionPlan":
+        """
+        Generate an execution plan for integrating new schemas into a dbt project.
+        
+        Uses the Planner prompts to create a structured plan with Anthropic Claude.
+        """
+        import json
+        from cartridge.ai.prompts import PLANNER_SYSTEM_PROMPT, PLANNER_USER_PROMPT
+        from cartridge.ai.base import ExecutionPlan
+        
+        self.logger.info(f"Generating execution plan with Anthropic {self.model}")
+        
+        # Extract context
+        context = request.context or ProjectContext()
+        
+        # Format existing sources and models
+        existing_sources_str = ", ".join(context.existing_sources) if context.existing_sources else "None"
+        existing_models_str = ", ".join(context.existing_models) if context.existing_models else "None"
+        
+        # Format new tables metadata
+        new_tables_metadata = []
+        for table in request.tables:
+            columns_info = []
+            for col in table.columns:
+                col_info = f"  - {col.name} ({col.data_type})"
+                if col.is_primary_key:
+                    col_info += " [PK]"
+                if col.is_foreign_key:
+                    col_info += f" [FK -> {col.foreign_key_table}.{col.foreign_key_column}]"
+                if not col.nullable:
+                    col_info += " [NOT NULL]"
+                columns_info.append(col_info)
+            
+            table_metadata = f"- {table.name} ({table.row_count or 'unknown'} rows)\n" + "\n".join(columns_info)
+            new_tables_metadata.append(table_metadata)
+        
+        new_tables_str = "\n\n".join(new_tables_metadata)
+        schema_name = request.tables[0].schema if request.tables else "unknown"
+        naming_convention_str = request.naming_convention or "Standard dbt conventions (stg_, int_, fct_, dim_)"
+        
+        # Format user prompt
+        user_prompt = PLANNER_USER_PROMPT.format(
+            project_name=context.project_name,
+            warehouse_type=context.warehouse_type,
+            naming_convention=naming_convention_str,
+            existing_sources=existing_sources_str,
+            existing_models=existing_models_str,
+            schema_name=schema_name,
+            new_tables_metadata=new_tables_str
+        )
+        
+        try:
+            # Call Anthropic API
+            message = await self.client.messages.create(
+                model=self.model,
+                max_tokens=4000,
+                temperature=0.1,
+                system=PLANNER_SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": user_prompt}]
+            )
+            
+            # Extract JSON from response
+            content = message.content[0].text if message.content else ""
+            if not content:
+                raise ValueError("Empty response from Anthropic API")
+            
+            plan_data = json.loads(content)
+            execution_plan = ExecutionPlan(**plan_data)
+            
+            self.logger.info(
+                f"Generated execution plan: {execution_plan.strategy} strategy "
+                f"with {len(execution_plan.actions)} actions"
+            )
+            
+            return execution_plan
+            
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Failed to parse JSON response: {e}")
+            self.logger.error(f"Response content: {content}")
+            raise ValueError(f"Invalid JSON response from AI: {e}")
+        except Exception as e:
+            self.logger.error(f"Execution plan generation failed: {e}")
+            raise
     
     async def generate_models(self, request: ModelGenerationRequest) -> ModelGenerationResult:
         """Generate dbt models based on schema analysis."""

@@ -1,9 +1,10 @@
 """Base classes for AI model integration."""
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
+from typing import Dict, List, Any, Optional, Literal
+from dataclasses import dataclass, field
 from enum import Enum
+from pydantic import BaseModel, Field
 
 from cartridge.core.logging import get_logger
 
@@ -49,6 +50,66 @@ class TableMapping:
 
 
 @dataclass
+class ProjectContext:
+    """Context derived from the existing GitHub repository or dbt project."""
+    
+    is_incremental: bool = False
+    existing_models: List[str] = field(default_factory=list)
+    existing_sources: List[str] = field(default_factory=list)
+    naming_conventions: Dict[str, str] = field(default_factory=dict)
+    warehouse_type: str = "postgresql"
+    project_name: str = "my_dbt_project"
+
+
+class PlanAction(BaseModel):
+    """A single action in an execution plan."""
+    
+    step_id: int = Field(..., description="Sequential step identifier")
+    type: Literal["create_source", "create_staging", "create_intermediate", "create_mart"] = Field(
+        ..., description="Type of action to perform"
+    )
+    name: str = Field(..., description="Name of the model or source to create")
+    file_path: str = Field(..., description="Relative path where the file should be created")
+    description: str = Field(..., description="Human-readable description of this action")
+    dependencies: List[str] = Field(default_factory=list, description="Names of models this action depends on")
+
+
+class ExecutionPlan(BaseModel):
+    """A complete plan for integrating new schemas into a dbt project."""
+    
+    strategy: Literal["greenfield", "brownfield"] = Field(
+        ..., description="Strategy: greenfield (new) or brownfield (incremental)"
+    )
+    actions: List[PlanAction] = Field(..., description="Ordered list of actions to execute")
+    
+    class Config:
+        """Pydantic configuration."""
+        json_schema_extra = {
+            "example": {
+                "strategy": "greenfield",
+                "actions": [
+                    {
+                        "step_id": 1,
+                        "type": "create_source",
+                        "name": "ecommerce",
+                        "file_path": "models/staging/ecommerce/sources.yml",
+                        "description": "Create source definition for ecommerce schema",
+                        "dependencies": []
+                    },
+                    {
+                        "step_id": 2,
+                        "type": "create_staging",
+                        "name": "stg_ecommerce_customers",
+                        "file_path": "models/staging/ecommerce/stg_ecommerce_customers.sql",
+                        "description": "Create staging model for customers table",
+                        "dependencies": ["ecommerce"]
+                    }
+                ]
+            }
+        }
+
+
+@dataclass
 class ModelGenerationRequest:
     """Request for generating dbt models."""
     
@@ -65,6 +126,9 @@ class ModelGenerationRequest:
     dimension_tables: Optional[List[str]] = None
     bridge_tables: Optional[List[str]] = None
     relationships: Optional[List[Dict[str, Any]]] = None
+    
+    # Project context for incremental generation
+    context: Optional[ProjectContext] = None
 
 
 @dataclass
@@ -115,6 +179,19 @@ class AIProvider(ABC):
     @abstractmethod
     async def generate_models(self, request: ModelGenerationRequest) -> ModelGenerationResult:
         """Generate dbt models based on schema analysis."""
+        pass
+    
+    @abstractmethod
+    async def generate_execution_plan(self, request: ModelGenerationRequest) -> ExecutionPlan:
+        """
+        Generate an execution plan for integrating new schemas into a dbt project.
+        
+        Args:
+            request: Model generation request with tables and optional project context
+            
+        Returns:
+            ExecutionPlan with ordered actions to execute
+        """
         pass
     
     @abstractmethod

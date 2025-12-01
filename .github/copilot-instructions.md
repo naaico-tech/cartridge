@@ -4,20 +4,28 @@ This document provides essential knowledge for AI coding agents to be immediatel
 
 ## 🏗️ Project Architecture
 
-Cartridge is a **modular data engineering toolkit** with 5 independent but interconnected components:
+Cartridge is a **modular data engineering toolkit**. Currently implementing 2 core components with 3 additional planned:
 
-### Core Components
-1. **`cartridge-init/`** - Schema inference and dbt model generation (AI-powered)
-2. **`cartridge-orchestrator/`** - Airflow DAG generation and workflow management
-3. **`cartridge-analytics/`** - Data summary layer and reporting
-4. **`cartridge-warp/`** - CDC streaming platform (MongoDB→PostgreSQL+)
+### Current Components (Implemented)
+1. **`cartridge-init/`** - AI-powered schema inference and dbt model generation
+   - CLI: `cartridge` (entry point: `cartridge.cli:main`)
+   - Features: Multi-database scanning, AI-driven dbt model generation, business context integration
+   - Status: ✅ Production ready with comprehensive API and CLI
+
+2. **`cartridge-warp/`** - CDC streaming platform for real-time data synchronization
+   - CLI: `cartridge-warp` (entry point: `cartridge_warp.cli:main`)
+   - Features: MongoDB→PostgreSQL CDC, schema evolution, dual execution modes
+   - Status: ✅ Core framework complete, production-ready architecture
+
+### Planned Components (Future)
+3. **`cartridge-orchestrator/`** - Airflow DAG generation and workflow management
+4. **`cartridge-analytics/`** - Data summary layer and reporting  
 5. **`cartridge-deployer/`** - Kubernetes and infrastructure bootstrapping
 
 ### Component Relationships
-- **cartridge-init** outputs schema definitions that **cartridge-warp** uses for CDC configuration
-- **cartridge-warp** streams data that **cartridge-analytics** summarizes
-- **cartridge-orchestrator** coordinates workflows across all components
-- **cartridge-deployer** manages deployment of the entire stack
+- **cartridge-init** scans databases and generates schema definitions
+- **cartridge-warp** uses these schemas for CDC configuration and streaming
+- Future components will integrate with this foundation
 
 ## 🚀 Development Workflow
 
@@ -28,22 +36,22 @@ python -m venv venv
 source venv/bin/activate  # macOS/Linux
 
 # 2. Navigate to specific component
-cd cartridge-{init|warp|orchestrator|analytics|deployer}/
+cd cartridge-{init|warp}/
 
-# 3. Install with development dependencies
+# 3. Install with development dependencies  
 make install-dev
 # OR: pip install -e ".[dev,test]"
 ```
 
 ### Code Quality Pipeline (Required Before Commits)
 ```bash
-# Format code
+# Format code (uses black + ruff)
 make format
 
-# Run linting
+# Run linting (ruff)
 make lint
 
-# Type checking
+# Type checking (mypy)
 make type-check
 
 # Run all quality checks
@@ -68,6 +76,10 @@ pytest tests/integration/
 
 # All tests with coverage
 make test-coverage
+
+# Component-specific test patterns
+# cartridge-init: make test-unit, make test-integration, make test-api
+# cartridge-warp: pytest (simpler test structure)
 ```
 
 ## 🔧 cartridge-warp Specific Patterns
@@ -117,14 +129,22 @@ class SourceConnector(Protocol):
 ## 🔧 cartridge-init Specific Patterns
 
 ### AI Provider Integration
-- **Multi-provider support**: OpenAI, Anthropic, Gemini
+- **Multi-provider support**: OpenAI, Anthropic, Gemini, or mock
 - **Factory pattern** for provider instantiation
 - **Streaming responses** for large model outputs
+- **Environment variables**: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`
 
 ### Configuration-Driven
-- **Multi-database** scanning with single config file
-- **Business context** integration for intelligent model generation
+- **Multi-database** scanning with single config file (YAML)
+- **Business context** integration via CSV for intelligent model generation
 - **Schema evolution** detection and adaptation
+- **Interactive onboarding**: `cartridge onboard` for collecting business context
+
+### FastAPI Backend
+- **API available**: `cartridge serve` starts FastAPI server with auto-reload
+- **Background tasks**: Celery-based async processing for scans/generation
+- **Database**: PostgreSQL with SQLAlchemy 2.0+ and Alembic migrations
+- **CLI-first design**: API is secondary interface to comprehensive CLI
 
 ## 📊 Technology Stack Conventions
 
@@ -204,8 +224,8 @@ tests/
 ```
 feat(warp): add MongoDB change stream support
 fix(init): resolve BigQuery schema inference
-docs(analytics): update API documentation
-test(orchestrator): add integration tests for DAG generation
+docs(warp): update schema evolution documentation
+test(init): add integration tests for multi-database scanning
 ```
 
 ### Pre-commit Hooks
