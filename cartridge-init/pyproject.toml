@@ -7,7 +7,7 @@ name = "cartridge"
 version = "0.1.0"
 description = "AI-powered dbt model generator that scans data sources and creates optimized dbt models"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = "==3.11.*"
 license = {text = "MIT"}
 authors = [
     {name = "Cartridge Team", email = "team@cartridge.dev"},
@@ -16,10 +16,7 @@ keywords = ["dbt", "data-modeling", "ai", "sql", "analytics"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Topic :: Database",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -27,87 +24,70 @@ classifiers = [
 
 dependencies = [
     # Core framework
-    "fastapi>=0.104.0",
-    "uvicorn[standard]>=0.24.0",
-    "pydantic>=2.5.0",
-    "pydantic-settings>=2.1.0",
+    "fastapi==0.109.2",
+    "uvicorn[standard]==0.27.1",
+    "pydantic==2.6.1",
+    "pydantic-settings==2.1.0",
     
     # Database and ORM
-    "sqlalchemy>=2.0.0",
-    "alembic>=1.13.0",
-    "asyncpg>=0.29.0",  # PostgreSQL async driver
-    "psycopg2-binary>=2.9.0",  # PostgreSQL sync driver
-    "greenlet>=3.0.0",  # Required for SQLAlchemy async
+    "sqlalchemy==2.0.25",
+    "alembic==1.13.1",
+    "asyncpg==0.29.0",
+    "psycopg2-binary==2.9.9",
+    "greenlet==3.0.3",
     
-    # Database connectors
-    "pymysql>=1.1.0",  # MySQL
-    "snowflake-connector-python>=3.6.0",  # Snowflake
-    "google-cloud-bigquery>=3.13.0",  # BigQuery
-    "redshift-connector>=2.0.0",  # Redshift
+    # Database connectors (only implemented ones)
+    "google-cloud-bigquery==3.17.2",
     
-    # AI/ML
-    "openai>=1.6.0",
-    "anthropic>=0.8.0",
-    "google-generativeai>=0.3.0",
-    "langchain>=0.1.0",
-    "langchain-openai>=0.0.5",
-    "tiktoken>=0.5.0",
-    
-    # Data processing
-    "pandas>=1.5.0,<2.1.0",
-    "numpy>=1.24.0",
-    "sqlparse>=0.4.0",
-    
-    # dbt integration
-    "dbt-core>=1.7.0",
-    "dbt-postgres>=1.7.0",
-    "dbt-snowflake>=1.7.0",
-    "dbt-bigquery>=1.7.0",
-    "dbt-redshift>=1.7.0",
+    # AI providers
+    "openai==1.12.0",
+    "anthropic==0.18.1",
+    "google-generativeai==0.4.0",
     
     # Task queue and caching
-    "celery>=5.3.0",
-    "redis>=5.0.0",
+    "celery==5.3.6",
+    "redis==5.0.1",
     
-    # File handling and compression
-    "jinja2>=3.1.0",
-    "pyyaml>=6.0",
+    # File handling and templates
+    "jinja2==3.1.3",
+    "pyyaml==6.0.1",
     
-    # Utilities
-    "click>=8.1.0",
-    "rich>=13.7.0",
-    "structlog>=23.2.0",
-    "python-multipart>=0.0.6",  # For file uploads
-    "httpx>=0.26.0",  # HTTP client
+    # CLI utilities
+    "click==8.1.7",
+    "rich==13.7.0",
+    "structlog==24.1.0",
+    "python-multipart==0.0.9",
+    "httpx==0.26.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.1.0",
-    "black>=23.12.0",
-    "isort>=5.13.0",
-    "flake8>=6.1.0",
-    "mypy>=1.8.0",
-    "pre-commit>=3.6.0",
+    "pytest==8.0.0",
+    "pytest-asyncio==0.23.4",
+    "pytest-cov==4.1.0",
+    "pytest-xdist==3.5.0",
+    "pytest-mock==3.12.0",
+    "black==24.1.1",
+    "ruff==0.2.1",
+    "mypy==1.8.0",
+    "pre-commit==3.6.0",
+    "psutil==5.9.8",
 ]
 
 test = [
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.1.0",
-    "pytest-xdist>=3.5.0",
-    "pytest-watch>=4.2.0",
-    "pytest-mock>=3.12.0",
-    "httpx>=0.26.0",
-    "psutil>=5.9.0",  # For performance tests
+    "pytest==8.0.0",
+    "pytest-asyncio==0.23.4",
+    "pytest-cov==4.1.0",
+    "pytest-xdist==3.5.0",
+    "pytest-mock==3.12.0",
+    "httpx==0.26.0",
+    "psutil==5.9.8",
 ]
 
 docs = [
-    "mkdocs>=1.5.0",
-    "mkdocs-material>=9.5.0",
-    "mkdocstrings[python]>=0.24.0",
+    "mkdocs==1.5.3",
+    "mkdocs-material==9.5.9",
+    "mkdocstrings[python]==0.24.0",
 ]
 
 [project.urls]
@@ -129,7 +109,7 @@ include = ["cartridge*"]
 # Black configuration
 [tool.black]
 line-length = 88
-target-version = ['py39']
+target-version = ['py311']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -145,16 +125,34 @@ extend-exclude = '''
 )/
 '''
 
-# isort configuration
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-line_length = 88
-known_first_party = ["cartridge"]
+# Ruff configuration (replaces isort + flake8)
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501", # line too long (handled by black)
+    "B008", # function calls in argument defaults
+    "C901", # complexity
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.isort]
+known-first-party = ["cartridge"]
 
 # MyPy configuration
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true

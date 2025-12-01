@@ -11,8 +11,11 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 # Development setup
-install: ## Install dependencies for development
-	pip install -e ".[dev,test,docs]"
+install: ## Install dependencies for production
+	pip install -e .
+
+install-dev: ## Install dependencies for development
+	pip install -e ".[dev,test]"
 	pre-commit install
 
 dev: ## Start development server with auto-reload
@@ -49,26 +52,26 @@ test-config: ## Run configuration tests only
 test-db: ## Run database tests only
 	pytest tests/test_database_setup.py -v
 
-test-watch: ## Run tests in watch mode
-	pytest-watch
-
 test-failed: ## Re-run only failed tests
 	pytest --lf
 
 test-parallel: ## Run tests in parallel
 	pytest -n auto
 
-lint: ## Run linting checks
-	flake8 src/ tests/
+lint: ## Run linting checks (ruff + mypy)
+	ruff check src/ tests/
 	mypy src/
 
-format: ## Format code with black and isort
+format: ## Format code with black and ruff
 	black src/ tests/
-	isort src/ tests/
+	ruff check --fix src/ tests/
 
 format-check: ## Check code formatting without making changes
 	black --check src/ tests/
-	isort --check-only src/ tests/
+	ruff check src/ tests/
+
+type-check: ## Run type checking with mypy
+	mypy src/
 
 # Database operations
 db-init: ## Initialize database
