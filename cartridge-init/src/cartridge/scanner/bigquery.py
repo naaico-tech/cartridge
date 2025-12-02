@@ -6,7 +6,7 @@ from datetime import datetime
 import json
 
 from google.cloud import bigquery
-from google.oauth2 import service_account
+from google.oauth2 import service_account, credentials as google_credentials
 from google.auth import default
 from google.api_core import exceptions as google_exceptions
 
@@ -20,46 +20,68 @@ logger = get_logger(__name__)
 
 
 class BigQueryConnector(DatabaseConnector):
-    """BigQuery database connector."""
-    
+    """
+    BigQuery database connector.
+    Supports authentication via service account file, service account JSON, Google Auth token (access_token), or ADC.
+    """
+
     def __init__(self, connection_config: Dict[str, Any]):
-        """Initialize BigQuery connector."""
+        """
+        Initialize BigQuery connector.
+        Args:
+            connection_config (Dict[str, Any]): Configuration dict. Supports:
+                - project_id
+                - dataset_id or database
+                - location
+                - credentials_path
+                - credentials_json
+                - access_token (Google OAuth2 access token)
+        """
         super().__init__(connection_config)
         self.client = None
         self.project_id = connection_config.get("project_id")
         self.dataset_id = connection_config.get("dataset_id") or connection_config.get("database")
         self.location = connection_config.get("location", "US")
-        
+
         # Authentication configuration
         self.credentials_path = connection_config.get("credentials_path")
         self.credentials_json = connection_config.get("credentials_json")
+        self.access_token = connection_config.get("access_token")
     
     async def connect(self) -> None:
-        """Establish BigQuery connection."""
+        """
+        Establish BigQuery connection using the best available authentication method.
+        Order of precedence:
+            1. access_token (Google OAuth2 token)
+            2. credentials_json (service account JSON string/dict)
+            3. credentials_path (service account file)
+            4. ADC (Application Default Credentials)
+        """
         try:
             credentials = None
-            
-            # Handle different authentication methods
-            if self.credentials_json:
-                # Service account key as JSON string
+
+            # 1. Google Auth token (OAuth2 access token)
+            if self.access_token:
+                credentials = google_credentials.Credentials(token=self.access_token)
+            # 2. Service account key as JSON string/dict
+            elif self.credentials_json:
                 if isinstance(self.credentials_json, str):
                     credentials_info = json.loads(self.credentials_json)
                 else:
                     credentials_info = self.credentials_json
                 credentials = service_account.Credentials.from_service_account_info(credentials_info)
+            # 3. Service account key file path
             elif self.credentials_path:
-                # Service account key file path
                 credentials = service_account.Credentials.from_service_account_file(self.credentials_path)
+            # 4. Default credentials (ADC)
             else:
-                # Default credentials (ADC - Application Default Credentials)
                 try:
                     credentials, default_project = default()
                     if not self.project_id:
                         self.project_id = default_project
                 except Exception:
-                    # If default() fails, set credentials to None and rely on project_id
                     credentials = None
-            
+
             # Create BigQuery client
             if credentials:
                 self.client = bigquery.Client(
@@ -72,9 +94,9 @@ class BigQueryConnector(DatabaseConnector):
                     project=self.project_id,
                     location=self.location
                 )
-            
+
             self.logger.info(f"Connected to BigQuery project: {self.project_id}")
-            
+
         except Exception as e:
             self.logger.error(f"Failed to connect to BigQuery: {e}")
             raise
