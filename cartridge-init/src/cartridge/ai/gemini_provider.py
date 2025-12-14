@@ -83,8 +83,8 @@ class GeminiProvider(AIProvider):
         schema_name = request.tables[0].schema if request.tables else "unknown"
         naming_convention_str = request.naming_convention or "Standard dbt conventions (stg_, int_, fct_, dim_)"
         
-        # Combine system and user prompts for Gemini
-        combined_prompt = f"{PLANNER_SYSTEM_PROMPT}\n\n{PLANNER_USER_PROMPT}".format(
+        # Format only the user prompt (system prompt contains JSON examples with curly braces)
+        user_prompt = PLANNER_USER_PROMPT.format(
             project_name=context.project_name,
             warehouse_type=context.warehouse_type,
             naming_convention=naming_convention_str,
@@ -93,6 +93,9 @@ class GeminiProvider(AIProvider):
             schema_name=schema_name,
             new_tables_metadata=new_tables_str
         )
+        
+        # Combine system and user prompts for Gemini (system prompt is not formatted)
+        combined_prompt = f"{PLANNER_SYSTEM_PROMPT}\n\n{user_prompt}"
         
         try:
             # Call Gemini API
